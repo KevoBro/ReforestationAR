@@ -2,33 +2,35 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import treeModel from './assets/tree_elm.glb?url'
+import treeModelIOS from './assets/tree_elm.usdz?url'
+import shrubModel from './assets/treeShrub.glb?url'
 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
+    <model-viewer src={shrubModel} ios-src={treeModelIOS} ar ar-modes="webxr scene-viewer quick-look" camera-controls tone-mapping="neutral" poster="poster.webp" shadow-intensity="1"
+     style={{ width: '100%', height: '100%' }}>
+    
+</model-viewer>
+
+<div style={{
+    position: 'absolute',
+    bottom: '10%',
+    left: '50%',
+    transform: 'translate(-50%, 50%)',
+    color: 'white',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    padding: '10px',
+    borderRadius: '5px',
+    fontSize: '1.5rem',
+  }}>
+    Elm Tree
+  </div>
+
+        
+    </div>
   )
 }
 
