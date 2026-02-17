@@ -12,7 +12,7 @@ function App() {
   return (
     <div className="safe-area" style={{ width: '100dvw', height: '100dvh', overflow: 'hidden' }}>
     <model-viewer src={shrubModel} ios-src={shrubModelIOS} ar ar-modes="webxr scene-viewer quick-look" camera-controls tone-mapping="neutral" poster="poster.webp" shadow-intensity="1"
-     style={{ width: '100%', height: '100%' }}>
+     style={{ width: '90%', height: '90%' }}>
     
     </model-viewer>
 
