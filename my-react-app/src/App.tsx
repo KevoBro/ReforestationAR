@@ -87,11 +87,12 @@ export default function App() {
         </div>
         {/* Fallback marker AR button */}
         {arSupported === false && (
-          <button className="fallback-btn" onClick={openMarkerFallback}>
+          
+        <></>  
+        )}
+        <button className="fallback-btn" onClick={openMarkerFallback}>
             Use Camera Marker AR Instead
           </button>
-          
-        )}
       </div>
 
     </div>
