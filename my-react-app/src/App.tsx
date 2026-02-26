@@ -20,14 +20,15 @@ declare global {
 }
 
 type TreeModel = {
+  id: string
   name: string
   glb: string
   usdz: string
 }
 
 const MODELS: TreeModel[] = [
-  { name: 'Elm Tree', glb: treeElmGLB, usdz: treeElmUSDZ },
-  { name: 'Shrub', glb: shrubGLB, usdz: shrubUSDZ },
+  { id: 'elm', name: 'Elm Tree', glb: treeElmGLB, usdz: treeElmUSDZ },
+  { id: 'shrub', name: 'Shrub', glb: shrubGLB, usdz: shrubUSDZ },
 ]
 
 export default function App() {
@@ -56,8 +57,8 @@ export default function App() {
 
   // Marker fallback (opens separate AR.js page)
   const openMarkerFallback = () => {
-    window.location.href = '/marker-ar.html'
-  }
+  window.location.href = `/marker-ar.html?model=${current.id}`
+}
 
   return (
     <div className="safe-area" style={{ width: '100dvw', height: '100dvh', overflow: 'hidden' }}>
