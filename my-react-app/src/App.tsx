@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
+import { NeedleEngine } from '@needle-tools/engine';
+import * as THREE from 'three';
 
 // 3D models (standard AR)
 import treeElmGLB from './assets/tree_elm.glb?url'
@@ -73,6 +75,9 @@ export default function App() {
         shadow-intensity="1"
         style={{ width: '90%', height: '80%' }}
       />
+      
+
+
       <div >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1em' }}>
           {/* Model label */}
