@@ -1,88 +1,151 @@
 import { useEffect, useState } from "react";
+import { NeedleXRSession } from "@needle-tools/engine";
 import "./App.css";
 import "./ar/TreePlacement"; // Import the AR placement logic
-import "./ar/ARScene"; // Import the AR scene setup
+import "./ar/needleScene";
 
-import treeElmGLB from "./assets/tree_elm.glb?url";
-import treeElmUSDZ from "./assets/tree_elm.usdz?url";
-import shrubGLB from "./assets/treeShrub.glb?url";
-import shrubUSDZ from "./assets/treeShrub.usdz?url";
+  import treeElmGLB from "./assets/tree_elm.glb?url";
+  import treeElmUSDZ from "./assets/tree_elm.usdz?url";
+  import shrubGLB from "./assets/treeShrub.glb?url";
+  import shrubUSDZ from "./assets/treeShrub.usdz?url";
 
-type TreeModel = {
-  id: string;
-  name: string;
-  glb: string;
-  usdz: string;
-};
+  type TreeModel = {
+    id: string;
+    name: string;
+    glb: string;
+    usdz: string;
+  };
 
-const MODELS: TreeModel[] = [
-  { id: "elm", name: "Elm Tree", glb: treeElmGLB, usdz: treeElmUSDZ },
-  { id: "shrub", name: "Shrub", glb: shrubGLB, usdz: shrubUSDZ },
-];
+  type TreePlacementDebug = {
+    status: string;
+    selectedUrl: string;
+    ghostReady: boolean;
+    ghostVisible: boolean;
+    canPlace: boolean;
+    mode: "hit" | "fallback" | "none";
+    message: string;
+  };
 
-export default function App() {
-  const [index, setIndex] = useState(0);
-  const [arSupported, setArSupported] = useState<boolean | null>(null);
+  const MODELS: TreeModel[] = [
+    { id: "elm", name: "Elm Tree", glb: treeElmGLB, usdz: treeElmUSDZ },
+    { id: "shrub", name: "Shrub", glb: shrubGLB, usdz: shrubUSDZ },
+  ];
 
-  const current = MODELS[index];
+  export default function App() {
+    const [index, setIndex] = useState(0);
+    const [arSupported, setArSupported] = useState<boolean | null>(null);
+    const [appClipUrl, setAppClipUrl] = useState<string>("");
+    const [debug, setDebug] = useState<TreePlacementDebug>({
+      status: "idle",
+      selectedUrl: "",
+      ghostReady: false,
+      ghostVisible: false,
+      canPlace: false,
+      mode: "none",
+      message: "Waiting for TreePlacement startup..."
+    });
 
-  useEffect(() => {
-    const checkSupport = async () => {
-      const xr = navigator.xr;
-      if (!xr) {
-        setArSupported(false);
-        return;
-      }
-      try {
-        const canAR = await xr.isSessionSupported("immersive-ar");
-        setArSupported(!!canAR);
-      } catch {
-        setArSupported(false);
-      }
+    const current = MODELS[index];
+
+    useEffect(() => {
+      const checkSupport = async () => {
+        try {
+          const canAR = await NeedleXRSession.isARSupported();
+          setArSupported(!!canAR);
+        } catch {
+          setArSupported(false);
+        }
+      };
+      checkSupport();
+    }, []);
+
+    useEffect(() => {
+      const url = window.location.href;
+      const encoded = encodeURIComponent(url);
+      setAppClipUrl(`https://appclip.needle.tools/ar?url=${encoded}`);
+    }, []);
+
+    useEffect(() => {
+      (window as unknown as { __selectedTreeUrl?: string }).__selectedTreeUrl = current.glb;
+      window.dispatchEvent(new CustomEvent("select-tree", { detail: current.glb }));
+    }, [current.glb]);
+
+    useEffect(() => {
+      const onDebug = (event: Event) => {
+        const detail = (event as CustomEvent<Partial<TreePlacementDebug>>).detail ?? {};
+        setDebug((prev) => ({
+          ...prev,
+          ...detail
+        }));
+      };
+
+      window.addEventListener("tree-placement-debug", onDebug as EventListener);
+      return () => {
+        window.removeEventListener("tree-placement-debug", onDebug as EventListener);
+      };
+    }, []);
+
+    const nextModel = () => setIndex((i) => (i + 1) % MODELS.length);
+    const prevModel = () => setIndex((i) => (i - 1 + MODELS.length) % MODELS.length);
+
+    const openMarkerFallback = () => {
+      window.location.href = `/marker-ar.html?model=${current.id}`;
     };
-    checkSupport();
-  }, []);
 
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent("select-tree", { detail: current.glb }));
-  }, [current.glb]);
+    const confirmPlacement = () => {
+      window.dispatchEvent(new CustomEvent("confirm-placement"));
+    };
 
-  const nextModel = () => setIndex((i) => (i + 1) % MODELS.length);
-  const prevModel = () => setIndex((i) => (i - 1 + MODELS.length) % MODELS.length);
+    return (
+    <div className="app-root">
 
-  const openMarkerFallback = () => {
-    window.location.href = `/marker-ar.html?model=${current.id}`;
-  };
+      {/* AR Canvas */}
+      
+      <div id="ar-container" className="ar-container"></div>
+      
 
-  const confirmPlacement = () => {
-    window.dispatchEvent(new CustomEvent("confirm-placement"));
-  };
 
-  return (
-    <div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "1em" }}>
-        <div className="model-label">{current.name}</div>
-
-        <div className="model-controls">
-          <button onClick={prevModel}>{"<"}</button>
-          <button onClick={nextModel}>{">"}</button>
+      {/* UI Overlay */}
+      
+      <div className="ui-overlay">
+        <div className="debug-panel">
+          <div className="debug-line"><strong>Status:</strong> {debug.status}</div>
+          <div className="debug-line"><strong>Mode:</strong> {debug.mode}</div>
+          <div className="debug-line"><strong>Ghost:</strong> {debug.ghostReady ? "ready" : "not-ready"} / {debug.ghostVisible ? "visible" : "hidden"}</div>
+          <div className="debug-line"><strong>Can Place:</strong> {debug.canPlace ? "yes" : "no"}</div>
+          <div className="debug-line"><strong>Model:</strong> {current.id} ({current.name})</div>
+          <div className="debug-line"><strong>URL:</strong> {debug.selectedUrl || current.glb}</div>
+          <div className="debug-line"><strong>Note:</strong> {debug.message}</div>
         </div>
 
         <div className="model-controls">
-          <button onClick={confirmPlacement}>Place Tree</button>
+          <button onClick={prevModel} aria-label="Previous tree">{"<"}</button>
+          <div className="model-label">{current.name}</div>
+          <button onClick={nextModel} aria-label="Next tree">{">"}</button>
         </div>
-      </div>
 
-      {arSupported === false && (
-        <button className="fallback-btn" onClick={openMarkerFallback}>
-          Use Camera Marker AR Instead
+        <a className="app-clip-link" href={appClipUrl}>
+          Open AR (App Clip)
+        </a>
+
+        <button onClick={confirmPlacement}>
+          Place Tree
         </button>
-      )}
 
-      <div className="ar-session">
-          <button onClick={confirmPlacement}>Begin AR</button>
-        </div>
+        {arSupported === false && (
+          <button onClick={openMarkerFallback}>
+            Use Camera Marker AR Instead
+          </button>
+        )}
+
+      <button onClick={()=>{
+        window.dispatchEvent(new CustomEvent("start-ar"))
+      }}>
+      Begin AR (WebXR)
+      </button>
+
+      </div>
 
     </div>
   );
-}
+  }

@@ -1,23 +1,109 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.app-root {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
 }
 
 .model-controls {
   display: flex;
   justify-content: center;
-  gap: 1rem; 
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .model-label {
-  font-size:x-large;
+  font-size: 1.1rem;
   font-weight: bold;
+  min-width: 8rem;
+  text-align: center;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 
 }
 
+.ar-container{
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  background: transparent;
+}
 
+.ui-overlay{
+  position: fixed;
+  left: 50%;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(92vw, 360px);
+  pointer-events: none;
+}
+
+.debug-panel {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(9, 14, 20, 0.75);
+  color: #f3f7fb;
+  font-size: 0.75rem;
+  line-height: 1.25;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events: auto;
+}
+
+.debug-line {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-clip-link {
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #0d5b3b;
+  background: #0f6a45;
+  color: #fff;
+  font-weight: 600;
+}
+
+.ui-overlay button,
+.ui-overlay .app-clip-link {
+  pointer-events: auto;
+}
+
+.ui-overlay button {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(14, 20, 27, 0.75);
+  color: #ffffff;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.model-controls button {
+  width: 44px;
+  min-width: 44px;
+  padding: 0.55rem 0.4rem;
+}
 
 .logo {
   height: 6em;
