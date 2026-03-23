@@ -1,47 +1,33 @@
 #root {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
+  z-index: 20;
+  pointer-events: none;
 }
 
 .app-root {
-  position: fixed;
+  position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  background:
-    radial-gradient(circle at top, rgba(187, 220, 188, 0.2), transparent 40%),
-    linear-gradient(180deg, #eef4ea 0%, #dfe8d8 100%);
-}
-
-.scene-host {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 0;
-  background: transparent;
-  overflow: hidden;
-}
-
-.scene-host canvas {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
+  pointer-events: none;
 }
 
 .ui-overlay {
   position: absolute;
   left: 50%;
-  bottom: calc(20px + env(safe-area-inset-bottom));
+  bottom: calc(112px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   z-index: 10;
   display: flex;
   flex-direction: column;
   gap: 12px;
   width: min(92vw, 390px);
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .scene-card {
@@ -96,8 +82,7 @@
 
 .arrow-button,
 .plant-button,
-.app-clip-button,
-.app-clip-button-slot button {
+.app-clip-button {
   border-radius: 18px;
   border: 1px solid rgba(26, 50, 30, 0.18);
   color: #173119;
@@ -125,49 +110,51 @@
   font-weight: 700;
 }
 
-.app-clip-button {
-  display: inline-block;
+.needle-ar-button-slot {
   width: 100%;
+  display: flex;
+  pointer-events: auto;
+}
+
+.needle-ar-button-slot:empty {
+  display: none;
+}
+
+.needle-ar-button-slot > button {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
   padding: 0.95rem 1.1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(26, 50, 30, 0.18);
   background: rgba(248, 251, 244, 0.95);
   color: #173119;
   font-size: 0.96rem;
   font-weight: 700;
-  text-align: center;
-  text-decoration: none;
-}
-
-.app-clip-button-slot {
-  width: 100%;
-}
-
-.app-clip-button-slot button {
-  width: 100%;
-  padding: 0.95rem 1.1rem;
-  background: rgba(248, 251, 244, 0.95);
-  color: #173119;
-  font-size: 0.96rem;
-  font-weight: 700;
-}
-
-.app-clip-note {
-  width: 100%;
-  padding: 0.75rem 0.9rem;
-  border-radius: 16px;
-  background: rgba(250, 252, 248, 0.84);
-  border: 1px solid rgba(37, 59, 38, 0.12);
-  color: #274229;
-  font-size: 0.88rem;
-  line-height: 1.35;
-  box-shadow: 0 14px 36px rgba(39, 54, 31, 0.1);
+  box-shadow: 0 16px 40px rgba(39, 54, 31, 0.16);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  pointer-events: auto;
+}
+
+.needle-ar-button-slot > button:hover {
+  transform: translateY(-1px);
+}
+
+.model-controls,
+.scene-card,
+.plant-button {
+  pointer-events: auto;
+}
+
+.arrow-button {
+  pointer-events: auto;
 }
 
 .arrow-button:hover,
-.plant-button:hover,
-.app-clip-button:hover,
-.app-clip-button-slot button:hover {
+.plant-button:hover {
   transform: translateY(-1px);
 }
 

@@ -1,18 +1,17 @@
-import type { Context as NeedleContext, OrbitControls as OrbitControlsType } from "@needle-tools/engine";
 import {
     addComponent,
     AnimationUtils,
     AssetReference,
     ContactShadows,
-    Context,
     DragControls,
     DragMode,
+    findObjectOfType,
     fitObjectIntoVolume,
-    ObjectUtils,
     OrbitControls,
+    onStart,
     WebXR,
 } from "@needle-tools/engine";
-import { Box3, Color, DirectionalLight, HemisphereLight, MeshStandardMaterial, Object3D, Vector3 } from "three";
+import { Box3, DirectionalLight, HemisphereLight, Object3D, Vector3 } from "three";
 
 export type TreeSpecies = {
     id: string;
@@ -20,21 +19,22 @@ export type TreeSpecies = {
     glb: string;
 };
 
-type GardenContext = NeedleContext & {
+type GardenContext = {
     __gardenInitialized?: boolean;
-};
+} & Parameters<Parameters<typeof onStart>[0]>[0];
 
 const ADD_TREE_EVENT = "garden:add-tree";
 const TREE_DISPLAY_BOUNDS = new Box3();
 
 let activeContext: GardenContext | null = null;
-let activeOrbitControls: OrbitControlsType | null = null;
+let activeOrbitControls: OrbitControls | null = null;
 let activeShadows: ContactShadows | null = null;
-let activeWebXR: WebXR | null = null;
-let activeARButtonSlot: HTMLElement | null = null;
 let plantedTrees: Object3D[] = [];
 let addTreeListenerAttached = false;
 let nextTreeIndex = 0;
+let arButtonAttachRetries = 0;
+
+const AR_BUTTON_SLOT_ID = "needle-ar-button-slot";
 
 const getTreeSpawnPosition = (index: number) => {
     const spacing = 1.35;
@@ -109,85 +109,64 @@ const attachAddTreeListener = () => {
     });
 };
 
-const createSceneGround = () => {
-    const ground = ObjectUtils.createPrimitive("Cylinder", {
-        scale: [4.2, 0.08, 4.2],
-        position: [0, -0.04, 0],
-        material: new MeshStandardMaterial({
-            color: new Color(0.78, 0.8, 0.74),
-            metalness: 0.08,
-            roughness: 0.82,
-        })
+const attachNeedleARButtonToOverlay = (button: HTMLButtonElement) => {
+    const slot = document.getElementById(AR_BUTTON_SLOT_ID);
+    if (slot) {
+        slot.replaceChildren(button);
+        arButtonAttachRetries = 0;
+        return;
+    }
+
+    if (arButtonAttachRetries >= 40) return;
+    arButtonAttachRetries += 1;
+    window.setTimeout(() => attachNeedleARButtonToOverlay(button), 100);
+};
+
+onStart((context) => {
+    const gardenContext = context as GardenContext;
+    if (gardenContext.__gardenInitialized) return;
+
+    gardenContext.__gardenInitialized = true;
+    activeContext = gardenContext;
+
+    context.renderer.setClearAlpha(0);
+    context.mainCamera.position.set(0, 1.8, 5.5);
+    context.mainCamera.lookAt(0, 0.9, 0);
+
+    activeOrbitControls = findObjectOfType(OrbitControls) ?? null;
+    if (activeOrbitControls) {
+        activeOrbitControls.enablePan = true;
+        activeOrbitControls.fitCamera({
+            objects: context.scene,
+            immediate: false,
+            fitOffset: 1.05,
+            fitDirection: { x: -0.35, y: 0.28, z: 1 },
+            relativeTargetOffset: { y: 0.15 },
+            fov: 28,
+        });
+    }
+
+    const hemiLight = new HemisphereLight(0xf4f7ff, 0x6c7a5d, 1.2);
+    const dirLight = new DirectionalLight(0xffffff, 1.35);
+    dirLight.position.set(4, 6, 3);
+    context.scene.add(hemiLight);
+    context.scene.add(dirLight);
+
+    activeShadows = ContactShadows.auto();
+    activeShadows.darkness = 0.72;
+    activeShadows.opacity = 0.88;
+
+    const webxr = addComponent(context.scene, WebXR, {
+        createARButton: true,
+        createVRButton: false,
+        createSendToQuestButton: false,
+        createQRCode: false,
+        autoPlace: true,
     });
-    ground.name = "GardenGround";
-    return ground;
-};
+    attachNeedleARButtonToOverlay(webxr.getButtonsFactory().createARButton());
 
-const mountNeedleARButton = () => {
-    if (!activeWebXR || !activeARButtonSlot) return;
-    const button = activeWebXR.getButtonsFactory().createARButton();
-    button.classList.add("garden-ar-button");
-    if (activeARButtonSlot.firstElementChild !== button) {
-        activeARButtonSlot.replaceChildren(button);
-    }
-};
-
-export const initializeGardenScene = async (host: HTMLElement) => {
-    if (activeContext) return activeContext;
-
-    const context = new Context({ domElement: host }) as GardenContext;
-    context.runInBackground = true;
-    await context.create({ files: [] });
-
-    if (!context.__gardenInitialized) {
-        context.__gardenInitialized = true;
-        context.renderer.setClearAlpha(0);
-
-        context.mainCamera.position.set(0, 1.8, 5.5);
-        context.mainCamera.lookAt(0, 0.9, 0);
-
-        const orbit = addComponent(context.mainCamera, OrbitControls, {
-            enablePan: true,
-            autoFit: false,
-            autoTarget: false,
-            minPolarAngle: 0.3,
-            maxPolarAngle: 1.45,
-            zoomSpeed: 0.8,
-        });
-        orbit.targetElement = context.domElement as HTMLElement;
-        activeOrbitControls = orbit;
-
-        const hemiLight = new HemisphereLight(0xf4f7ff, 0x6c7a5d, 1.2);
-        const dirLight = new DirectionalLight(0xffffff, 1.35);
-        dirLight.position.set(4, 6, 3);
-        context.scene.add(hemiLight);
-        context.scene.add(dirLight);
-
-        const ground = createSceneGround();
-        context.scene.add(ground);
-
-        activeShadows = ContactShadows.auto();
-        activeShadows.darkness = 0.72;
-        activeShadows.opacity = 0.88;
-
-        activeWebXR = addComponent(context.scene, WebXR, {
-            createARButton: false,
-            createVRButton: false,
-            createSendToQuestButton: false,
-            createQRCode: false,
-            autoPlace: true,
-        });
-        mountNeedleARButton();
-
-        context.menu.showFullscreenOption(true);
-        attachAddTreeListener();
-    }
-
-    activeContext = context;
-    return context;
-};
-
-export const setGardenARButtonSlot = (slot: HTMLElement | null) => {
-    activeARButtonSlot = slot;
-    mountNeedleARButton();
-};
+    context.menu.setVisible(true);
+    context.menu.setSpatialMenuVisible(true);
+    context.menu.showFullscreenOption(true);
+    attachAddTreeListener();
+});

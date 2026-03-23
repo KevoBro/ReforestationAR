@@ -8,7 +8,14 @@
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.1.0/model-viewer.min.js"></script>
   </head>
   <body>
-    <div id="root"></div>
+    <needle-engine
+      camera-controls="true"
+      environment-image="https://cdn.needle.tools/static/hdris/photo_studio_01_4k.pmrem.ktx2"
+      background-image="https://cdn.needle.tools/static/hdris/photo_studio_01_4k.pmrem.ktx2"
+      background-blurriness=".2"
+    >
+      <div id="root"></div>
+    </needle-engine>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
