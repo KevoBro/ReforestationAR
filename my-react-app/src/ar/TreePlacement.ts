@@ -1,5 +1,5 @@
 import { AssetReference, Behaviour, type NeedleXREventArgs, WebXR } from "@needle-tools/engine";
-import { Box3, Object3D, Quaternion, Vector3, type Material } from "three";
+import { Box3, BoxGeometry, DoubleSide, Mesh, MeshBasicMaterial, Object3D, Quaternion, Vector3, type Material } from "three";
 
 type SelectTreeEvent = CustomEvent<string>;
 type TreePlacementDebugDetail = {
@@ -12,9 +12,13 @@ type TreePlacementDebugDetail = {
     message?: string;
 };
 
+const DEBUG_USE_TEST_CUBE = true;
+
 export class TreePlacement extends Behaviour {
     private webxr: WebXR | null = null;
+    private placementRoot: Object3D | null = null;
     private ghost: Object3D | null = null;
+    private headLockedDebugCube: Mesh | null = null;
     private currentAsset: AssetReference | null = null;
     private canPlace = false;
     private readonly hitPosition = new Vector3();
@@ -119,39 +123,54 @@ export class TreePlacement extends Behaviour {
     }
 
     onEnterXR() {
+        this.ensurePlacementRoot();
+        this.ensureHeadLockedDebugCube();
         if (this.ghost) this.ghost.visible = false;
         this.canPlace = false;
+        this.recreateGhostForActiveSession();
         this.emitDebug({ status: "entered-xr", ghostVisible: false, canPlace: false, mode: "none" });
     }
 
     onLeaveXR() {
         if (this.ghost) this.ghost.visible = false;
         this.canPlace = false;
+        this.destroyHeadLockedDebugCube();
+        this.destroyPlacementRoot();
         this.emitDebug({ status: "left-xr", ghostVisible: false, canPlace: false, mode: "none" });
     }
 
     private async createGhost() {
-        if (!this.currentAsset) return;
-
         this.destroyGhost();
+        this.ensurePlacementRoot();
 
-        const instance = await this.currentAsset.instantiate(this.context.scene);
-        if (!instance) {
-            console.warn("TreePlacement: Failed to instantiate ghost from selected tree asset.");
-            this.emitDebug({ status: "error", ghostReady: false, message: "Ghost instantiate failed. Check model URL/asset file." });
-            return;
+        let instance: Object3D | null = null;
+        if (DEBUG_USE_TEST_CUBE) {
+            instance = this.createDebugCube(true);
+            this.placementRoot?.add(instance);
+        } else {
+            if (!this.currentAsset) return;
+            instance = await this.currentAsset.instantiate(this.placementRoot ?? this.context.scene);
+            if (!instance) {
+                console.warn("TreePlacement: Failed to instantiate ghost from selected tree asset.");
+                this.emitDebug({ status: "error", ghostReady: false, message: "Ghost instantiate failed. Check model URL/asset file." });
+                return;
+            }
         }
 
         this.ghost = instance;
-        this.normalizeModelForPlacement(this.ghost);
+        if (!DEBUG_USE_TEST_CUBE) {
+            this.normalizeModelForPlacement(this.ghost);
+        }
         this.ghost.visible = false;
-        this.makeGhostMaterial(this.ghost);
+        if (!DEBUG_USE_TEST_CUBE) {
+            this.makeGhostMaterial(this.ghost);
+        }
         this.emitDebug({
             status: "ghost-created",
             ghostReady: true,
             ghostVisible: this.ghost.visible,
             canPlace: this.canPlace,
-            message: "Ghost model instantiated successfully."
+            message: DEBUG_USE_TEST_CUBE ? "Debug cube ghost created." : "Ghost model instantiated successfully."
         });
     }
 
@@ -169,7 +188,7 @@ export class TreePlacement extends Behaviour {
     }
 
     private async placeTree() {
-        if (!this.currentAsset || !this.ghost || !this.canPlace) {
+        if ((!this.currentAsset && !DEBUG_USE_TEST_CUBE) || !this.ghost || !this.canPlace) {
             this.emitDebug({
                 status: "place-blocked",
                 ghostReady: !!this.ghost,
@@ -179,18 +198,46 @@ export class TreePlacement extends Behaviour {
             return;
         }
 
-        const tree = await this.currentAsset.instantiate(this.context.scene);
-        if (!tree) {
-            console.warn("TreePlacement: Failed to instantiate placed tree from selected tree asset.");
-            this.emitDebug({ status: "error", message: "Placed tree instantiate failed." });
-            return;
+        let tree: Object3D | null = null;
+        if (DEBUG_USE_TEST_CUBE) {
+            tree = this.createDebugCube(false);
+            this.ensurePlacementRoot();
+            this.placementRoot?.add(tree);
+        } else {
+            this.ensurePlacementRoot();
+            tree = await this.currentAsset!.instantiate(this.placementRoot ?? this.context.scene);
+            if (!tree) {
+                console.warn("TreePlacement: Failed to instantiate placed tree from selected tree asset.");
+                this.emitDebug({ status: "error", message: "Placed tree instantiate failed." });
+                return;
+            }
+            this.normalizeModelForPlacement(tree);
         }
-        this.normalizeModelForPlacement(tree);
 
         tree.position.copy(this.hitPosition);
         tree.quaternion.copy(this.hitQuaternion);
         tree.scale.copy(this.ghost.scale);
-        this.emitDebug({ status: "placed", canPlace: this.canPlace, message: "Tree placed in scene." });
+        this.emitDebug({
+            status: "placed",
+            canPlace: this.canPlace,
+            message: DEBUG_USE_TEST_CUBE ? "Debug cube placed in scene." : "Tree placed in scene."
+        });
+    }
+
+    private createDebugCube(isGhost: boolean): Mesh {
+        const color = isGhost ? 0x3be37a : 0x4ec3ff;
+        const material = new MeshBasicMaterial({
+            color,
+            transparent: isGhost,
+            opacity: isGhost ? 0.45 : 1,
+            depthTest: false,
+            depthWrite: false,
+            side: DoubleSide
+        });
+        const cube = new Mesh(new BoxGeometry(0.28, 0.28, 0.28), material);
+        cube.name = isGhost ? "DebugGhostCube" : "DebugPlacedCube";
+        cube.renderOrder = 999;
+        return cube;
     }
 
     private normalizeModelForPlacement(root: Object3D) {
@@ -222,5 +269,71 @@ export class TreePlacement extends Behaviour {
             this.ghost.parent.remove(this.ghost);
         }
         this.ghost = null;
+    }
+
+    private ensurePlacementRoot() {
+        const xrRig = this.context.xr?.rig?.gameObject ?? null;
+        const desiredParent = xrRig ?? this.context.scene;
+
+        if (this.placementRoot?.parent === desiredParent) return;
+        if (this.placementRoot?.parent && this.placementRoot.parent !== desiredParent) {
+            this.placementRoot.removeFromParent();
+        }
+        if (this.placementRoot) {
+            desiredParent.add(this.placementRoot);
+            this.emitDebug({
+                status: "placement-root",
+                message: xrRig
+                    ? "Placement root attached to XR rig (hit-test uses rig space)."
+                    : "Placement root attached to scene."
+            });
+            return;
+        }
+
+        this.placementRoot = new Object3D();
+        this.placementRoot.name = "TreePlacementRoot";
+        desiredParent.add(this.placementRoot);
+        this.emitDebug({
+            status: "placement-root",
+            message: xrRig
+                ? "Placement root attached to XR rig (hit-test uses rig space)."
+                : "Placement root attached to scene."
+        });
+    }
+
+    private destroyPlacementRoot() {
+        this.destroyGhost();
+        if (!this.placementRoot) return;
+        this.placementRoot.removeFromParent();
+        this.placementRoot = null;
+    }
+
+    private recreateGhostForActiveSession() {
+        if (!this.currentAsset && !DEBUG_USE_TEST_CUBE) return;
+        void this.createGhost();
+    }
+
+    private ensureHeadLockedDebugCube() {
+        if (!DEBUG_USE_TEST_CUBE || this.headLockedDebugCube) return;
+        const parent = this.context.mainCamera.parent ?? this.context.scene;
+        const material = new MeshBasicMaterial({
+            color: 0xff3355,
+            depthTest: false,
+            depthWrite: false,
+            side: DoubleSide
+        });
+        const cube = new Mesh(new BoxGeometry(0.18, 0.18, 0.18), material);
+        cube.name = "HeadLockedDebugCube";
+        cube.position.set(0, 0, -0.75);
+        cube.renderOrder = 1000;
+        parent.add(cube);
+        this.headLockedDebugCube = cube;
+        this.emitDebug({ status: "headlocked", message: "Head-locked debug cube attached in front of XR camera." });
+    }
+
+    private destroyHeadLockedDebugCube() {
+        if (!this.headLockedDebugCube) return;
+        this.headLockedDebugCube.removeFromParent();
+        this.headLockedDebugCube = null;
     }
 }

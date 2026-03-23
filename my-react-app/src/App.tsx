@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState  } from "react";
+import { Context } from "@needle-tools/engine";
 import { NeedleXRSession } from "@needle-tools/engine";
 import "./App.css";
 import "./ar/TreePlacement"; // Import the AR placement logic
-import "./ar/needleScene";
+import { createFallbackNeedleContext, initializeNeedleScene, startNeedleARSession } from "./ar/needleScene";
 
   import treeElmGLB from "./assets/tree_elm.glb?url";
   import treeElmUSDZ from "./assets/tree_elm.usdz?url";
@@ -44,6 +45,7 @@ import "./ar/needleScene";
       mode: "none",
       message: "Waiting for TreePlacement startup..."
     });
+    const [debugHistory, setDebugHistory] = useState<string[]>([]);
 
     const current = MODELS[index];
 
@@ -77,11 +79,82 @@ import "./ar/needleScene";
           ...prev,
           ...detail
         }));
+        const line = [
+          detail.status ?? "update",
+          detail.mode ? `mode=${detail.mode}` : "",
+          detail.message ?? ""
+        ].filter(Boolean).join(" | ");
+        setDebugHistory((prev) => [line, ...prev].slice(0, 8));
       };
 
       window.addEventListener("tree-placement-debug", onDebug as EventListener);
       return () => {
         window.removeEventListener("tree-placement-debug", onDebug as EventListener);
+      };
+    }, []);
+
+    useEffect(() => {
+      let cancelled = false;
+
+      const boot = async () => {
+        await customElements.whenDefined("needle-engine");
+        const host = document.getElementById("ar-container") as (HTMLElement & {
+          getContext?: () => Promise<unknown>;
+        }) | null;
+
+        if (!host) {
+          window.dispatchEvent(new CustomEvent("tree-placement-debug", {
+            detail: {
+              status: "error",
+              message: "AR container host element was not found."
+            }
+          }));
+          return;
+        }
+
+        if (!host.getContext) {
+          window.dispatchEvent(new CustomEvent("tree-placement-debug", {
+            detail: {
+              status: "init",
+              message: "needle-engine host does not expose getContext(). Falling back to manual Context."
+            }
+          }));
+
+          try {
+            const context = await createFallbackNeedleContext(host);
+            if (cancelled) return;
+            initializeNeedleScene(context);
+          } catch (error) {
+            console.warn("Failed to create fallback Needle context", error);
+            window.dispatchEvent(new CustomEvent("tree-placement-debug", {
+              detail: {
+                status: "error",
+                message: "Failed to create fallback Needle context."
+              }
+            }));
+          }
+          return;
+        }
+
+        try {
+          const context = await host.getContext();
+          if (cancelled) return;
+          initializeNeedleScene(context as Context);
+        } catch (error) {
+          console.warn("Failed to boot Needle scene", error);
+          window.dispatchEvent(new CustomEvent("tree-placement-debug", {
+            detail: {
+              status: "error",
+              message: "Failed to boot Needle scene context."
+            }
+          }));
+        }
+      };
+
+      void boot();
+
+      return () => {
+        cancelled = true;
       };
     }, []);
 
@@ -96,56 +169,53 @@ import "./ar/needleScene";
       window.dispatchEvent(new CustomEvent("confirm-placement"));
     };
 
-    return (
+  return (
     <div className="app-root">
+      <needle-engine id="ar-container" className="ar-container" src="[]" keep-alive="true" camera-controls="false">
+        <div className="ui-overlay">
+          <div className="debug-panel">
+            <div className="debug-line"><strong>Status:</strong> {debug.status}</div>
+            <div className="debug-line"><strong>Mode:</strong> {debug.mode}</div>
+            <div className="debug-line"><strong>Ghost:</strong> {debug.ghostReady ? "ready" : "not-ready"} / {debug.ghostVisible ? "visible" : "hidden"}</div>
+            <div className="debug-line"><strong>Can Place:</strong> {debug.canPlace ? "yes" : "no"}</div>
+            <div className="debug-line"><strong>Model:</strong> {current.id} ({current.name})</div>
+            <div className="debug-line"><strong>URL:</strong> {debug.selectedUrl || current.glb}</div>
+            <div className="debug-line"><strong>Note:</strong> {debug.message}</div>
+            <div className="debug-history">
+              {debugHistory.map((entry, index) => (
+                <div className="debug-line" key={`${entry}-${index}`}>{entry}</div>
+              ))}
+            </div>
+          </div>
 
-      {/* AR Canvas */}
-      
-      <div id="ar-container" className="ar-container"></div>
-      
+          <div className="model-controls">
+            <button onClick={prevModel} aria-label="Previous tree">{"<"}</button>
+            <div className="model-label">{current.name}</div>
+            <button onClick={nextModel} aria-label="Next tree">{">"}</button>
+          </div>
 
+          <a className="app-clip-link" href={appClipUrl}>
+            Open AR (App Clip)
+          </a>
 
-      {/* UI Overlay */}
-      
-      <div className="ui-overlay">
-        <div className="debug-panel">
-          <div className="debug-line"><strong>Status:</strong> {debug.status}</div>
-          <div className="debug-line"><strong>Mode:</strong> {debug.mode}</div>
-          <div className="debug-line"><strong>Ghost:</strong> {debug.ghostReady ? "ready" : "not-ready"} / {debug.ghostVisible ? "visible" : "hidden"}</div>
-          <div className="debug-line"><strong>Can Place:</strong> {debug.canPlace ? "yes" : "no"}</div>
-          <div className="debug-line"><strong>Model:</strong> {current.id} ({current.name})</div>
-          <div className="debug-line"><strong>URL:</strong> {debug.selectedUrl || current.glb}</div>
-          <div className="debug-line"><strong>Note:</strong> {debug.message}</div>
-        </div>
-
-        <div className="model-controls">
-          <button onClick={prevModel} aria-label="Previous tree">{"<"}</button>
-          <div className="model-label">{current.name}</div>
-          <button onClick={nextModel} aria-label="Next tree">{">"}</button>
-        </div>
-
-        <a className="app-clip-link" href={appClipUrl}>
-          Open AR (App Clip)
-        </a>
-
-        <button onClick={confirmPlacement}>
-          Place Tree
-        </button>
-
-        {arSupported === false && (
-          <button onClick={openMarkerFallback}>
-            Use Camera Marker AR Instead
+          <button onClick={confirmPlacement}>
+            Place Tree
           </button>
-        )}
 
-      <button onClick={()=>{
-        window.dispatchEvent(new CustomEvent("start-ar"))
-      }}>
-      Begin AR (WebXR)
-      </button>
+          {arSupported === false && (
+            <button onClick={openMarkerFallback}>
+              Use Camera Marker AR Instead
+            </button>
+          )}
 
-      </div>
-
+          <button onClick={()=>{
+            startNeedleARSession();
+          }}>
+            Begin AR (WebXR)
+          </button>
+        </div>
+      </needle-engine>
     </div>
   );
+
   }
