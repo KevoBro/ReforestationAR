@@ -1,218 +1,193 @@
-import type { Context as NeedleContext } from "@needle-tools/engine";
-import { Context, NeedleXRSession, WebXR } from "@needle-tools/engine";
-import { TreePlacement } from "./TreePlacement";
+import type { Context as NeedleContext, OrbitControls as OrbitControlsType } from "@needle-tools/engine";
+import {
+    addComponent,
+    AnimationUtils,
+    AssetReference,
+    ContactShadows,
+    Context,
+    DragControls,
+    DragMode,
+    fitObjectIntoVolume,
+    ObjectUtils,
+    OrbitControls,
+    WebXR,
+} from "@needle-tools/engine";
+import { Box3, Color, DirectionalLight, HemisphereLight, MeshStandardMaterial, Object3D, Vector3 } from "three";
 
-type InitializedContext = NeedleContext & {
-    __treePlacementInitialized?: boolean;
-    __startARHandler?: () => void;
+export type TreeSpecies = {
+    id: string;
+    name: string;
+    glb: string;
 };
 
-let activeStartARHandler: (() => void) | null = null;
-
-const emitInitDebug = (message: string) => {
-    window.dispatchEvent(new CustomEvent("tree-placement-debug", {
-        detail: {
-            status: "init",
-            message
-        }
-    }));
+type GardenContext = NeedleContext & {
+    __gardenInitialized?: boolean;
 };
 
-type SessionAttempt = {
-    label: string;
-    init: XRSessionInit;
-    strategy: "needle" | "direct";
+const ADD_TREE_EVENT = "garden:add-tree";
+const TREE_DISPLAY_BOUNDS = new Box3();
+
+let activeContext: GardenContext | null = null;
+let activeOrbitControls: OrbitControlsType | null = null;
+let activeShadows: ContactShadows | null = null;
+let activeWebXR: WebXR | null = null;
+let activeARButtonSlot: HTMLElement | null = null;
+let plantedTrees: Object3D[] = [];
+let addTreeListenerAttached = false;
+let nextTreeIndex = 0;
+
+const getTreeSpawnPosition = (index: number) => {
+    const spacing = 1.35;
+    const column = (index % 3) - 1;
+    const row = Math.floor(index / 3);
+    return {
+        x: column * spacing,
+        y: 0,
+        z: -row * spacing,
+    };
 };
 
-const cloneSessionInit = (init: XRSessionInit): XRSessionInit => ({
-    requiredFeatures: init.requiredFeatures ? [...init.requiredFeatures] : undefined,
-    optionalFeatures: init.optionalFeatures ? [...init.optionalFeatures] : undefined,
-    domOverlay: init.domOverlay ? { root: init.domOverlay.root } : undefined,
-});
-
-const formatFeatures = (value?: readonly string[]) => value?.length ? value.join(",") : "none";
-const formatError = (error: unknown) => {
-    if (error instanceof Error) {
-        const name = error.name || "Error";
-        const message = error.message || "no message";
-        return `${name}: ${message}`;
-    }
-    if (typeof error === "object" && error !== null) {
-        const maybeName = "name" in error ? String((error as { name?: unknown }).name ?? "") : "";
-        const maybeMessage = "message" in error ? String((error as { message?: unknown }).message ?? "") : "";
-        const maybeCode = "code" in error ? String((error as { code?: unknown }).code ?? "") : "";
-        const details = [maybeName, maybeMessage, maybeCode ? `code=${maybeCode}` : ""].filter(Boolean).join(" | ");
-        return details || JSON.stringify(error);
-    }
-    return String(error);
+const fitTreeModel = (root: Object3D) => {
+    TREE_DISPLAY_BOUNDS.setFromCenterAndSize(new Vector3(0, 0.95, 0), new Vector3(0.95, 1.9, 0.95));
+    fitObjectIntoVolume(root, TREE_DISPLAY_BOUNDS);
 };
 
-export const initializeNeedleScene = (context: NeedleContext) => {
-    const initializedContext = context as InitializedContext;
-    if (initializedContext.__treePlacementInitialized) {
-        emitInitDebug("Needle scene already initialized.");
+const refreshCameraFit = () => {
+    if (!activeOrbitControls || plantedTrees.length === 0) return;
+    activeOrbitControls.fitCamera({
+        objects: plantedTrees,
+        immediate: false,
+        fitOffset: 1.2,
+        fitDirection: { x: -0.35, y: 0.28, z: 1 },
+        relativeTargetOffset: { y: 0.15 },
+        fov: 28,
+    });
+};
+
+const addTreeToScene = async (detail: TreeSpecies) => {
+    if (!activeContext) return;
+
+    const spawn = getTreeSpawnPosition(nextTreeIndex++);
+    const anchor = new Object3D();
+    anchor.name = `TreeAnchor_${detail.id}_${nextTreeIndex}`;
+    anchor.position.set(spawn.x, spawn.y, spawn.z);
+    activeContext.scene.add(anchor);
+
+    const asset = AssetReference.getOrCreateFromUrl(detail.glb, activeContext);
+    const instance = await asset.instantiate(anchor);
+    if (!instance) {
+        anchor.removeFromParent();
+        console.warn(`Failed to instantiate tree asset: ${detail.glb}`);
         return;
     }
-    initializedContext.__treePlacementInitialized = true;
 
-    const webxr = context.scene.addComponent(WebXR, {
-        createARButton: false,
-        createVRButton: false,
-        createSendToQuestButton: false,
-        createQRCode: false,
-        useQuicklookExport: false,
-        autoPlace: true,
-        usePlacementReticle: false,
-        usePlacementAdjustment: false,
-        autoCenter: false
+    fitTreeModel(instance);
+    AnimationUtils.autoplayAnimations(instance);
+
+    const drag = addComponent(anchor, DragControls, {
+        dragMode: DragMode.XZPlane,
+        xrDragMode: DragMode.Attached,
+        keepRotation: true,
+        xrKeepRotation: true,
+        showGizmo: false,
     });
-    void webxr;
+    drag.snapGridResolution = 0;
 
-    context.scene.addComponent(TreePlacement);
-    emitInitDebug("Needle scene initialized. WebXR and TreePlacement attached.");
-    context.renderer.setClearAlpha(0);
-    context.menu.setVisible(false);
-    context.menu.setSpatialMenuVisible(false);
-    context.menu.showFullscreenOption(false);
-
-    context.domElement.addEventListener("xr-session-started", () => {
-        emitInitDebug("xr-session-started event received from context.");
-    });
-    context.domElement.addEventListener("enter-ar", () => {
-        emitInitDebug("enter-ar event received from context.");
-    });
-    context.domElement.addEventListener("exit-ar", () => {
-        emitInitDebug("exit-ar event received from context.");
-    });
-
-    const sessionInit = NeedleXRSession.getDefaultSessionInit("immersive-ar");
-    sessionInit.requiredFeatures = Array.from(new Set([...(sessionInit.requiredFeatures ?? []), "hit-test"]));
-    sessionInit.optionalFeatures = Array.from(new Set([
-        ...(sessionInit.optionalFeatures ?? []),
-        "dom-overlay",
-        "light-estimation",
-        "anchors"
-    ]));
-    sessionInit.domOverlay = { root: context.domElement as HTMLElement };
-
-    const attemptStart = async (webxrComponent: WebXR) => {
-        const attempts: SessionAttempt[] = [
-            {
-                label: "Needle default AR session",
-                init: cloneSessionInit(sessionInit),
-                strategy: "needle"
-            },
-            {
-                label: "Direct immersive-ar with hit-test + dom-overlay",
-                init: {
-                    requiredFeatures: ["hit-test"],
-                    optionalFeatures: ["dom-overlay"],
-                    domOverlay: { root: context.domElement as HTMLElement }
-                },
-                strategy: "direct"
-            },
-            {
-                label: "Direct immersive-ar with hit-test only",
-                init: {
-                    requiredFeatures: ["hit-test"]
-                },
-                strategy: "direct"
-            },
-            {
-                label: "Direct immersive-ar minimal session",
-                init: {},
-                strategy: "direct"
-            }
-        ];
-
-        for (const attempt of attempts) {
-            emitInitDebug(
-                `Trying ${attempt.label}. required=${formatFeatures(attempt.init.requiredFeatures)}, ` +
-                `optional=${formatFeatures(attempt.init.optionalFeatures)}`
-            );
-
-            try {
-                if (attempt.strategy === "needle") {
-                    const session = await webxrComponent.enterAR(attempt.init);
-                    if (session) {
-                        emitInitDebug(`${attempt.label} succeeded.`);
-                        return session;
-                    }
-                    emitInitDebug(`${attempt.label} returned no active session.`);
-                    continue;
-                }
-
-                const xrSession = await navigator.xr?.requestSession("immersive-ar", attempt.init);
-                if (!xrSession) {
-                    emitInitDebug(`${attempt.label} returned no XRSession.`);
-                    continue;
-                }
-
-                const session = NeedleXRSession.setSession("immersive-ar", xrSession, attempt.init, context);
-                emitInitDebug(`${attempt.label} succeeded via direct requestSession.`);
-                return session;
-            } catch (error) {
-                const message = formatError(error);
-                emitInitDebug(`${attempt.label} failed. ${message}`);
-            }
-        }
-
-        return null;
-    };
-
-    initializedContext.__startARHandler = () => {
-        if (NeedleXRSession.active) return;
-        void (async () => {
-            try {
-                const xrAvailable = "xr" in navigator && !!navigator.xr;
-                const sessionSupported = xrAvailable && navigator.xr?.isSessionSupported
-                    ? await navigator.xr.isSessionSupported("immersive-ar").catch(() => false)
-                    : false;
-                const needleSupported = await NeedleXRSession.isARSupported().catch(() => false);
-
-                emitInitDebug(
-                    `Requesting AR session start. navigator.xr=${xrAvailable ? "yes" : "no"}, ` +
-                    `isSessionSupported=${sessionSupported ? "yes" : "no"}, ` +
-                    `NeedleXRSession.isARSupported=${needleSupported ? "yes" : "no"}`
-                );
-
-                const session = await attemptStart(webxr);
-                if (session) emitInitDebug("AR session start requested successfully.");
-                else emitInitDebug("AR session request returned no active session.");
-            } catch (err) {
-            console.warn("Failed to start AR session", err);
-            window.dispatchEvent(new CustomEvent("tree-placement-debug", {
-                detail: {
-                    status: "error",
-                    message: "Could not start XR session. Make sure permissions are allowed."
-                }
-            }));
-            }
-        })();
-    };
-    activeStartARHandler = initializedContext.__startARHandler;
-
-    window.addEventListener("start-ar", initializedContext.__startARHandler);
+    plantedTrees = [...plantedTrees, anchor];
+    activeShadows?.fitShadows({ object: anchor, positionOffset: { y: 0.01 } });
+    refreshCameraFit();
 };
 
-export const startNeedleARSession = () => {
-    if (!activeStartARHandler) {
-        window.dispatchEvent(new CustomEvent("tree-placement-debug", {
-            detail: {
-                status: "error",
-                message: "AR start requested before Needle scene finished initializing."
-            }
-        }));
-        return;
+const attachAddTreeListener = () => {
+    if (addTreeListenerAttached) return;
+    addTreeListenerAttached = true;
+
+    window.addEventListener(ADD_TREE_EVENT, (event: Event) => {
+        const detail = (event as CustomEvent<TreeSpecies>).detail;
+        if (!detail?.glb) return;
+        void addTreeToScene(detail);
+    });
+};
+
+const createSceneGround = () => {
+    const ground = ObjectUtils.createPrimitive("Cylinder", {
+        scale: [4.2, 0.08, 4.2],
+        position: [0, -0.04, 0],
+        material: new MeshStandardMaterial({
+            color: new Color(0.78, 0.8, 0.74),
+            metalness: 0.08,
+            roughness: 0.82,
+        })
+    });
+    ground.name = "GardenGround";
+    return ground;
+};
+
+const mountNeedleARButton = () => {
+    if (!activeWebXR || !activeARButtonSlot) return;
+    const button = activeWebXR.getButtonsFactory().createARButton();
+    button.classList.add("garden-ar-button");
+    if (activeARButtonSlot.firstElementChild !== button) {
+        activeARButtonSlot.replaceChildren(button);
     }
-    emitInitDebug("Begin AR button pressed.");
-    activeStartARHandler();
 };
 
-export const createFallbackNeedleContext = async (host: HTMLElement) => {
-    const context = new Context({ domElement: host });
+export const initializeGardenScene = async (host: HTMLElement) => {
+    if (activeContext) return activeContext;
+
+    const context = new Context({ domElement: host }) as GardenContext;
     context.runInBackground = true;
     await context.create({ files: [] });
-    emitInitDebug("Fallback Context created manually on host element.");
+
+    if (!context.__gardenInitialized) {
+        context.__gardenInitialized = true;
+        context.renderer.setClearAlpha(0);
+
+        context.mainCamera.position.set(0, 1.8, 5.5);
+        context.mainCamera.lookAt(0, 0.9, 0);
+
+        const orbit = addComponent(context.mainCamera, OrbitControls, {
+            enablePan: true,
+            autoFit: false,
+            autoTarget: false,
+            minPolarAngle: 0.3,
+            maxPolarAngle: 1.45,
+            zoomSpeed: 0.8,
+        });
+        orbit.targetElement = context.domElement as HTMLElement;
+        activeOrbitControls = orbit;
+
+        const hemiLight = new HemisphereLight(0xf4f7ff, 0x6c7a5d, 1.2);
+        const dirLight = new DirectionalLight(0xffffff, 1.35);
+        dirLight.position.set(4, 6, 3);
+        context.scene.add(hemiLight);
+        context.scene.add(dirLight);
+
+        const ground = createSceneGround();
+        context.scene.add(ground);
+
+        activeShadows = ContactShadows.auto();
+        activeShadows.darkness = 0.72;
+        activeShadows.opacity = 0.88;
+
+        activeWebXR = addComponent(context.scene, WebXR, {
+            createARButton: false,
+            createVRButton: false,
+            createSendToQuestButton: false,
+            createQRCode: false,
+            autoPlace: true,
+        });
+        mountNeedleARButton();
+
+        context.menu.showFullscreenOption(true);
+        attachAddTreeListener();
+    }
+
+    activeContext = context;
     return context;
+};
+
+export const setGardenARButtonSlot = (slot: HTMLElement | null) => {
+    activeARButtonSlot = slot;
+    mountNeedleARButton();
 };
