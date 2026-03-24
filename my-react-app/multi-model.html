@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Multi-Model AR</title>
+  </head>
+  <body>
+    <needle-engine
+      camera-controls="true"
+      environment-image="https://cdn.needle.tools/static/hdris/photo_studio_01_4k.pmrem.ktx2"
+      background-image="https://cdn.needle.tools/static/hdris/photo_studio_01_4k.pmrem.ktx2"
+      background-blurriness=".2"
+    >
+      <div id="root"></div>
+    </needle-engine>
+    <script type="module" src="/src/multi-model-main.tsx"></script>
+  </body>
+</html>
