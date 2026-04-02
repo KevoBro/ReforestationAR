@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Inlander";
+  src: url("./assets/fonts/inlander/InlanderDemo-p76jd.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 html, body, #root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

@@ -114,6 +114,7 @@ a {
 
 .toggle-chip,
 .page-action-button,
+.page-back-button,
 .picker-arrow {
   border-radius: 18px;
   border: 1px solid rgba(26, 50, 30, 0.18);
@@ -124,23 +125,40 @@ a {
 
 .toggle-chip {
   padding: 0.95rem 0.7rem;
-  background: transparent;
-  color: #4b614a;
+  background: #f2f2f2;
+  color: #1f1f1f;
+  border-color: #d5d5d5;
+  font-family: "Merriweather", "Avenir Next", Avenir, Helvetica, Arial, sans-serif;
   font-size: 0.92rem;
   font-weight: 700;
 }
 
 .toggle-chip.is-active {
-  background: linear-gradient(180deg, #204b2a 0%, #17361f 100%);
-  color: #f6fbf2;
+  background: #01a071;
+  color: #ffffff;
+  border-color: #01865f;
 }
 
 .page-action-button {
   width: 100%;
   padding: 1rem 1.15rem;
-  background: linear-gradient(180deg, #204b2a 0%, #17361f 100%);
-  color: #f6fbf2;
+  background: #01a071;
+  color: #ffffff;
+  border-color: #01865f;
+  font-family: "Merriweather", "Avenir Next", Avenir, Helvetica, Arial, sans-serif;
   font-size: 1rem;
+  font-weight: 700;
+}
+
+.page-back-button {
+  align-self: flex-start;
+  min-width: 96px;
+  padding: 0.62rem 1rem;
+  border-radius: 14px;
+  background: #01a071;
+  color: #ffffff;
+  font-family: "Merriweather", "Avenir Next", Avenir, Helvetica, Arial, sans-serif;
+  font-size: 0.95rem;
   font-weight: 700;
 }
 
@@ -154,6 +172,7 @@ a {
 .back-link:hover,
 .toggle-chip:hover,
 .page-action-button:hover,
+.page-back-button:hover,
 .picker-arrow:hover {
   transform: translateY(-1px);
 }

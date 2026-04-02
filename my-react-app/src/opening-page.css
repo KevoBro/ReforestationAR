@@ -1,0 +1,142 @@
+@font-face {
+  font-family: "Acumin";
+  src: url("./assets/fonts/acumin-pro/Acumin-RPro.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Acumin";
+  src: url("./assets/fonts/acumin-pro/Acumin-BdPro.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Merriweather";
+  src: url("./assets/fonts/merriweather-2/Merriweather-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Merriweather";
+  src: url("./assets/fonts/merriweather-2/Merriweather-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inlander";
+  src: url("./assets/fonts/inlander/InlanderDemo-Eag8W.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+.opening-page {
+  min-height: 100vh;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  box-sizing: border-box;
+  font-family: "Avenir Next", Avenir, Helvetica, Arial, sans-serif;
+  background: #05524e;
+}
+
+.opening-card {
+  width: min(92vw, 760px);
+  min-height: min(86vh, 900px);
+  padding: 40px 36px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.24);
+}
+
+.opening-logo {
+  width: 100%;
+  max-width: 390px;
+  height: auto;
+  border-radius: 4px;
+}
+
+.opening-tagline {
+  margin: 4px 0 10px;
+  text-align: center;
+  font-family: "Inlander", "Acumin", "Avenir Next", Avenir, Helvetica, Arial, sans-serif;
+  font-size: clamp(1.85rem, 4.6vw, 3.15rem);
+  line-height: 1.22;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #111111;
+  max-width: 20ch;
+}
+
+.opening-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.opening-button {
+  width: min(75%, 420px);
+  border: 1px solid #d5d5d5;
+  border-radius: 16px;
+  background: #01a071;
+  color: #ffffff;
+  font-family: "Merriweather", "Avenir Next", Avenir, Helvetica, Arial, sans-serif;
+  font-size: clamp(1.55rem, 4vw, 2.15rem);
+  font-weight: 700;
+  line-height: 1.15;
+  padding: 18px 20px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+.opening-button:hover {
+  filter: brightness(0.97);
+}
+
+.opening-button:active {
+  transform: translateY(1px);
+}
+
+@media (max-width: 440px) {
+  .opening-page {
+    padding: 10px 12px;
+  }
+
+  .opening-card {
+    width: min(100%, 520px);
+    min-height: auto;
+    border-radius: 18px;
+    padding: 16px 14px;
+    gap: 10px;
+  }
+
+  .opening-tagline {
+    font-size: 1.2rem;
+    margin: 2px 0 8px;
+  }
+
+  .opening-button {
+    font-size: 1.2rem;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+}
