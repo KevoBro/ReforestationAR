@@ -1,0 +1,230 @@
+.catalog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: rgba(10, 18, 10, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: auto;
+}
+
+.catalog-backdrop--details {
+  z-index: 70;
+}
+
+.catalog-sheet,
+.tree-details-sheet {
+  width: min(100%, 900px);
+  max-height: min(82vh, 860px);
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid rgba(37, 59, 38, 0.16);
+  background: rgba(247, 250, 243, 0.96);
+  box-shadow: 0 30px 80px rgba(10, 20, 10, 0.28);
+  pointer-events: auto;
+}
+
+.catalog-header,
+.tree-details-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 1.1rem 1.1rem 0.9rem;
+}
+
+.catalog-eyebrow,
+.tree-details-eyebrow {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #5f755b;
+}
+
+.catalog-title,
+.tree-details-title {
+  margin-top: 0.35rem;
+  color: #173119;
+  font-size: 1.28rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.catalog-close,
+.tree-details-close {
+  border-radius: 16px;
+  border: 1px solid rgba(26, 50, 30, 0.18);
+  background: rgba(248, 251, 244, 0.95);
+  color: #173119;
+  font-size: 0.92rem;
+  font-weight: 700;
+  box-shadow: 0 12px 28px rgba(39, 54, 31, 0.12);
+  pointer-events: auto;
+}
+
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  padding: 0 1.1rem 1.1rem;
+  overflow: auto;
+  max-height: calc(min(82vh, 860px) - 88px);
+  pointer-events: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+.catalog-card {
+  position: relative;
+  min-height: 220px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(37, 59, 38, 0.14);
+  background: linear-gradient(180deg, rgba(228, 236, 224, 0.98) 0%, rgba(206, 219, 200, 0.96) 100%);
+  box-shadow: 0 16px 40px rgba(39, 54, 31, 0.12);
+}
+
+.catalog-card.is-selected {
+  border-color: rgba(32, 75, 42, 0.5);
+  box-shadow: 0 20px 50px rgba(32, 75, 42, 0.2);
+}
+
+.catalog-select-button {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.catalog-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  padding: 2.25rem 2rem 2.75rem;
+  box-sizing: border-box;
+  opacity: 0.9;
+}
+
+.catalog-preview-scrim {
+  position: absolute;
+  inset: auto 0 0;
+  height: 42%;
+  background: linear-gradient(180deg, rgba(10, 20, 10, 0) 0%, rgba(10, 20, 10, 0.82) 100%);
+}
+
+.catalog-card-name {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  color: #f6fbf2;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.catalog-info-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: rgba(10, 20, 10, 0.58);
+  color: #f6fbf2;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.tree-details-body {
+  display: grid;
+  gap: 18px;
+  padding: 0 1.1rem 1.1rem;
+  overflow: auto;
+  max-height: calc(min(82vh, 860px) - 88px);
+  pointer-events: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+.tree-details-preview {
+  width: 100%;
+  max-height: 240px;
+  object-fit: cover;
+  display: block;
+  padding: 1.8rem;
+  box-sizing: border-box;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(228, 236, 224, 0.98) 0%, rgba(206, 219, 200, 0.96) 100%);
+}
+
+.tree-details-copy {
+  color: #3f5a40;
+  font-size: 0.98rem;
+  line-height: 1.55;
+}
+
+.tree-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.tree-detail-item {
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(37, 59, 38, 0.14);
+  background: rgba(250, 252, 248, 0.94);
+}
+
+.tree-detail-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #5f755b;
+}
+
+.tree-detail-value {
+  display: block;
+  margin-top: 0.45rem;
+  color: #173119;
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+@media (max-width: 720px) {
+  .catalog-backdrop {
+    padding: 16px 12px;
+  }
+
+  .catalog-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tree-details-grid {
+    grid-template-columns: 1fr;
+  }
+}

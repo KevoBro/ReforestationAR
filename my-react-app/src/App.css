@@ -80,6 +80,11 @@
   -webkit-backdrop-filter: blur(12px);
 }
 
+.model-label--catalog {
+  width: 100%;
+  cursor: pointer;
+}
+
 .arrow-button,
 .plant-button,
 .app-clip-button {
@@ -154,6 +159,7 @@
 }
 
 .arrow-button:hover,
+.model-label--catalog:hover,
 .plant-button:hover {
   transform: translateY(-1px);
 }

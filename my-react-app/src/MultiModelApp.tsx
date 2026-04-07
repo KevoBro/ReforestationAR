@@ -1,50 +1,137 @@
 import { useState } from "react";
 import "./App.css";
+import "./tree-catalog.css";
 import type { TreeSpecies } from "./ar/needleScene";
+import TreeCatalogModal from "./components/TreeCatalogModal";
+import { TREE_CATALOG, type TreeCatalogEntry } from "./treeCatalog";
 
-import treeElmGLB from "./assets/ElmTree.glb?url";
-import shrubGLB from "./assets/treeShrub.glb?url";
-
-const SPECIES: TreeSpecies[] = [
-  { id: "elm", name: "Elm Tree", glb: treeElmGLB },
-  { id: "shrub", name: "Shrub", glb: shrubGLB },
-];
+const getTreeSpecies = (tree: TreeCatalogEntry): TreeSpecies => ({
+  id: tree.id,
+  name: tree.name,
+  glb: tree.multiGlb,
+});
 
 export default function MultiModelApp() {
   const [index, setIndex] = useState(0);
-  const current = SPECIES[index];
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  const [detailsTreeId, setDetailsTreeId] = useState<string | null>(null);
 
-  const nextSpecies = () => setIndex((value) => (value + 1) % SPECIES.length);
-  const previousSpecies = () => setIndex((value) => (value - 1 + SPECIES.length) % SPECIES.length);
+  const current = TREE_CATALOG[index];
+  const detailsTree = TREE_CATALOG.find((tree) => tree.id === detailsTreeId) ?? null;
+
+  const nextSpecies = () => setIndex((value) => (value + 1) % TREE_CATALOG.length);
+  const previousSpecies = () => setIndex((value) => (value - 1 + TREE_CATALOG.length) % TREE_CATALOG.length);
 
   const addTree = () => {
-    window.dispatchEvent(new CustomEvent<TreeSpecies>("garden:add-tree", { detail: current }));
+    window.dispatchEvent(new CustomEvent<TreeSpecies>("garden:add-tree", { detail: getTreeSpecies(current) }));
+  };
+
+  const handleSelectTree = (tree: TreeCatalogEntry) => {
+    const nextIndex = TREE_CATALOG.findIndex((entry) => entry.id === tree.id);
+    if (nextIndex >= 0) {
+      setIndex(nextIndex);
+    }
+    setDetailsTreeId(null);
+    setIsCatalogOpen(false);
+  };
+
+  const closeCatalog = () => {
+    setIsCatalogOpen(false);
+    setDetailsTreeId(null);
   };
 
   return (
-    <div className="app-root">
-      <div className="ui-overlay">
-        <div className="scene-card">
-          <div className="scene-eyebrow">Tree Garden Prototype</div>
-          <div className="scene-title">Add a tree, then drag it to reposition it.</div>
-        </div>
+    <>
+      <div className="app-root">
+        <div className="ui-overlay">
+          <div className="scene-card">
+            <div className="scene-eyebrow">Tree Garden Prototype</div>
+            <div className="scene-title">Add a tree, then drag it to reposition it.</div>
+          </div>
 
-        <div className="model-controls">
-          <button className="arrow-button" onClick={previousSpecies} aria-label="Previous tree species">
-            {"<"}
+          <div className="model-controls">
+            <button className="arrow-button" onClick={previousSpecies} aria-label="Previous tree species">
+              {"<"}
+            </button>
+            <button
+              type="button"
+              className="model-label model-label--catalog"
+              aria-haspopup="dialog"
+              aria-label={`Open tree catalog for ${current.name}`}
+              onClick={() => setIsCatalogOpen(true)}
+            >
+              {current.name}
+            </button>
+            <button className="arrow-button" onClick={nextSpecies} aria-label="Next tree species">
+              {">"}
+            </button>
+          </div>
+
+          <button className="plant-button" onClick={addTree}>
+            Add {current.name}
           </button>
-          <div className="model-label">{current.name}</div>
-          <button className="arrow-button" onClick={nextSpecies} aria-label="Next tree species">
-            {">"}
-          </button>
+
+          <div id="needle-ar-button-slot" className="needle-ar-button-slot" />
         </div>
-
-        <button className="plant-button" onClick={addTree}>
-          Add {current.name}
-        </button>
-
-        <div id="needle-ar-button-slot" className="needle-ar-button-slot" />
       </div>
-    </div>
+
+      {isCatalogOpen ? (
+        <TreeCatalogModal
+          trees={TREE_CATALOG}
+          selectedId={current.id}
+          title="Select A Tree"
+          showInfoButton
+          onClose={closeCatalog}
+          onOpenDetails={(tree) => setDetailsTreeId(tree.id)}
+          onSelect={handleSelectTree}
+        />
+      ) : null}
+
+      {isCatalogOpen && detailsTree ? (
+        <div className="catalog-backdrop catalog-backdrop--details" role="presentation" onClick={() => setDetailsTreeId(null)}>
+          <div
+            className="tree-details-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${detailsTree.name} details`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="tree-details-header">
+              <div>
+                <div className="tree-details-eyebrow">Tree Information</div>
+                <div className="tree-details-title">{detailsTree.name}</div>
+              </div>
+              <button type="button" className="tree-details-close" onClick={() => setDetailsTreeId(null)}>
+                Close
+              </button>
+            </div>
+
+            <div className="tree-details-body">
+              <img className="tree-details-preview" src={detailsTree.previewImage} alt="" aria-hidden="true" />
+              <div className="tree-details-copy">{detailsTree.description}</div>
+
+              <div className="tree-details-grid">
+                <div className="tree-detail-item">
+                  <span className="tree-detail-label">Species</span>
+                  <span className="tree-detail-value">{detailsTree.species}</span>
+                </div>
+                <div className="tree-detail-item">
+                  <span className="tree-detail-label">Model Age</span>
+                  <span className="tree-detail-value">{detailsTree.modelAge}</span>
+                </div>
+                <div className="tree-detail-item">
+                  <span className="tree-detail-label">Height Range</span>
+                  <span className="tree-detail-value">{detailsTree.heightRange}</span>
+                </div>
+                <div className="tree-detail-item">
+                  <span className="tree-detail-label">Preferred Soil</span>
+                  <span className="tree-detail-value">{detailsTree.soilConditions}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }

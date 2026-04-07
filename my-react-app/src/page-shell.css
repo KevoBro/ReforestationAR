@@ -188,6 +188,53 @@ a {
   font-size: 1.05rem;
   font-weight: 700;
   text-align: center;
+  cursor: pointer;
+}
+
+.picker-label--catalog {
+  box-shadow: 0 12px 28px rgba(39, 54, 31, 0.12);
+}
+
+.tree-summary-card {
+  padding: 1.2rem 1.25rem;
+  border-radius: 22px;
+  border: 1px solid rgba(37, 59, 38, 0.14);
+  background: rgba(247, 250, 243, 0.92);
+  box-shadow: 0 18px 50px rgba(39, 54, 31, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.tree-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 1rem;
+}
+
+.tree-summary-item {
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(37, 59, 38, 0.14);
+  background: rgba(250, 252, 248, 0.94);
+}
+
+.tree-summary-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #5f755b;
+}
+
+.tree-summary-value {
+  display: block;
+  margin-top: 0.45rem;
+  color: #173119;
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 .viewer-card {
@@ -218,5 +265,9 @@ a {
   .viewer-card {
     min-height: 280px;
     height: min(50vh, 460px);
+  }
+
+  .tree-summary-grid {
+    grid-template-columns: 1fr;
   }
 }
