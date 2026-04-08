@@ -1,5 +1,5 @@
 import placeholderPreview from "./assets/react.svg";
-import multiElmGLB from "./assets/ElmTree.glb?url";
+//import multiElmGLB from "./assets/ElmTree.glb?url";
 import singleElmGLB from "./assets/ElmTreeAlternate.glb?url";
 import singleElmUSDZ from "./assets/tree_elm.usdz?url";
 import shrubGLB from "./assets/treeShrubRevised.glb?url";
