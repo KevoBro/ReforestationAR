@@ -1,6 +1,6 @@
 import placeholderPreview from "./assets/react.svg";
 import multiElmGLB from "./assets/ElmTree.glb?url";
-import singleElmGLB from "./assets/tree_elm.glb?url";
+import singleElmGLB from "./assets/ElmTreeAlternate.glb?url";
 import singleElmUSDZ from "./assets/tree_elm.usdz?url";
 import shrubGLB from "./assets/treeShrubRevised.glb?url";
 import shrubUSDZ from "./assets/treeShrub.usdz?url";
@@ -24,7 +24,7 @@ export const TREE_CATALOG: TreeCatalogEntry[] = [
     id: "elm",
     name: "Elm Tree",
     previewImage: placeholderPreview,
-    multiGlb: multiElmGLB,
+    multiGlb: singleElmGLB,
     singleGlb: singleElmGLB,
     singleUsdz: singleElmUSDZ,
     species: "American Elm",
