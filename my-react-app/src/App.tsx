@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "./opening-page.css";
 import "./page-shell.css";
 
 type FeatureMode = "marker-based" | "single-model" | "multi-model";
@@ -41,6 +42,7 @@ const FEATURES: Array<{
 ];
 
 export default function App() {
+  const [showModeSelector, setShowModeSelector] = useState(false);
   const [mode, setMode] = useState<FeatureMode>("multi-model");
   const current = FEATURES.find((feature) => feature.id === mode) ?? FEATURES[0];
 
@@ -48,9 +50,33 @@ export default function App() {
     window.location.href = current.href;
   };
 
+  if (!showModeSelector) {
+    return (
+      <main className="opening-page">
+        <section className="opening-card" aria-label="Rebuilding Augusta landing screen">
+          <img className="opening-logo" src="/left.png" alt="Rebuilding Augusta logo" />
+          <p className="opening-tagline">"Rebuilding Augusta One Tree at a Time"</p>
+
+          <div className="opening-actions">
+            <button className="opening-button" type="button">
+              Start tour
+            </button>
+            <button className="opening-button" type="button" onClick={() => setShowModeSelector(true)}>
+              Start planting
+            </button>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <div className="page-shell">
       <div className="page-panel">
+        <button className="page-back-button" type="button" onClick={() => setShowModeSelector(false)}>
+          Back
+        </button>
+
         <div className="page-intro">
           <div className="page-eyebrow">Reforestation AR Modes</div>
           <h1 className="page-title">Choose the AR experience you want to open.</h1>
