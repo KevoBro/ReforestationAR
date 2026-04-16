@@ -32,6 +32,7 @@
 
 .scene-card {
   width: 100%;
+  box-sizing: border-box;
   padding: 0.9rem 1rem;
   border-radius: 18px;
   border: 1px solid rgba(37, 59, 38, 0.14);
@@ -67,7 +68,7 @@
 .model-label {
   flex: 1;
   min-width: 0;
-  padding: 0.95rem 1rem;
+  padding: 0.88rem 1rem;
   border-radius: 18px;
   border: 1px solid rgba(37, 59, 38, 0.14);
   background: rgba(250, 252, 248, 0.94);
@@ -82,7 +83,17 @@
 
 .model-label--catalog {
   width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
   cursor: pointer;
+}
+
+.model-label-text {
+  display: inline-block;
+  font-size: 1.12rem;
+  line-height: 1;
 }
 
 .arrow-button,
@@ -109,10 +120,18 @@
 .plant-button {
   width: 100%;
   padding: 1rem 1.15rem;
-  background: linear-gradient(180deg, #204b2a 0%, #17361f 100%);
+  background: #05524e;
   color: #f6fbf2;
   font-size: 1rem;
   font-weight: 700;
+}
+
+.catalogIcon {
+  width: 24px;
+  height: 24px;
+  display: block;
+  flex: 0 0 auto;
+  object-fit: contain;
 }
 
 .needle-ar-button-slot {
@@ -171,5 +190,14 @@
 
   .model-label {
     font-size: 0.98rem;
+  }
+
+  .model-label-text {
+    font-size: 1.02rem;
+  }
+
+  .catalogIcon {
+    width: 22px;
+    height: 22px;
   }
 }

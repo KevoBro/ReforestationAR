@@ -17,7 +17,7 @@ const FEATURES: Array<{
     label: "Marker-Based",
     title: "Marker-Based AR.js",
     description:
-      "Launch the marker workflow on its own page, choose a plant, and then open the camera view that uses the Hiro marker.",
+      "Launch the marker experience on its own page, choose a plant, and then open the camera view that uses the Hiro marker.",
     href: "./marker-based.html",
     actionLabel: "Open Marker-Based Page",
   },
@@ -26,7 +26,7 @@ const FEATURES: Array<{
     label: "Single Model",
     title: "Single Model Viewer",
     description:
-      "Open the standalone model-viewer page for one plant at a time, with native AR handoff where the device supports it.",
+      "Open the model-viewer page to view one plant at a time. Compatible with iPhone 6S and later. Recommended for best performance on lower-end devices",
     href: "./single-model.html",
     actionLabel: "Open Single Model Page",
   },
@@ -35,7 +35,7 @@ const FEATURES: Array<{
     label: "Multi-Model",
     title: "Needle Multi-Model Garden",
     description:
-      "Open the original Needle Engine experience where you can add multiple plants to the scene and reposition them.",
+      "Opens to the Needle Engine experience where you can add multiple plants to the scene and reposition them. Recommended for higher-end devices (iPhone 12 and later).",
     href: "./multi-model.html",
     actionLabel: "Open Multi-Model Page",
   },
@@ -43,7 +43,7 @@ const FEATURES: Array<{
 
 export default function App() {
   const [showModeSelector, setShowModeSelector] = useState(false);
-  const [mode, setMode] = useState<FeatureMode>("multi-model");
+  const [mode, setMode] = useState<FeatureMode>("single-model");
   const current = FEATURES.find((feature) => feature.id === mode) ?? FEATURES[0];
 
   const openSelectedPage = () => {
@@ -81,8 +81,6 @@ export default function App() {
           <div className="page-eyebrow">Reforestation AR Modes</div>
           <h1 className="page-title">Choose the AR experience you want to open.</h1>
           <p className="page-copy">
-            Each mode now has its own page so the interface stays lighter and the Needle App Clip flow can remain
-            isolated.
           </p>
         </div>
 

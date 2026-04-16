@@ -40,10 +40,9 @@ export default function MarkerLauncherApp() {
 
         <div className="page-intro">
           <div className="page-eyebrow">Marker-Based AR</div>
-          <h1 className="page-title">Choose a plant for the marker workflow.</h1>
+          <h1 className="page-title">Choose a plant to place on marker.</h1>
           <p className="page-copy">
-            This page stays lightweight, then hands off to the camera experience when you are ready to scan the Hiro
-            marker.
+           
           </p>
         </div>
 
@@ -67,7 +66,7 @@ export default function MarkerLauncherApp() {
           Open Marker AR Camera
         </button>
 
-        <div className="page-note">The next page opens the live camera view and expects the Hiro marker to be visible.</div>
+        <div className="page-note">The button above opens the live camera view and expects the Hiro marker to be visible. Make sure the camera is pointed at the Hiro Marker.</div>
       </div>
     </div>
   );

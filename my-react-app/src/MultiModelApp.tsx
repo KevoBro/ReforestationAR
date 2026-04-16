@@ -4,6 +4,7 @@ import "./tree-catalog.css";
 import type { TreeSpecies } from "./ar/needleScene";
 import TreeCatalogModal from "./components/TreeCatalogModal";
 import { TREE_CATALOG, type TreeCatalogEntry } from "./treeCatalog";
+import catalogIcon from "./assets/catalogIcon.png";
 
 const getTreeSpecies = (tree: TreeCatalogEntry): TreeSpecies => ({
   id: tree.id,
@@ -45,7 +46,7 @@ export default function MultiModelApp() {
       <div className="app-root">
         <div className="ui-overlay">
           <div className="scene-card">
-            <div className="scene-eyebrow">Tree Garden Prototype</div>
+            <div className="scene-eyebrow">Tree Garden</div>
             <div className="scene-title">Add a tree, then drag it to reposition it.</div>
           </div>
 
@@ -60,7 +61,8 @@ export default function MultiModelApp() {
               aria-label={`Open tree catalog for ${current.name}`}
               onClick={() => setIsCatalogOpen(true)}
             >
-              {current.name}
+              <span className="model-label-text">{current.name}</span>
+              <img className="catalogIcon" src={catalogIcon} alt="catalog icon" />
             </button>
             <button className="arrow-button" onClick={nextSpecies} aria-label="Next tree species">
               {">"}
@@ -68,7 +70,7 @@ export default function MultiModelApp() {
           </div>
 
           <button className="plant-button" onClick={addTree}>
-            Add {current.name}
+            Add {current.name} 
           </button>
 
           <div id="needle-ar-button-slot" className="needle-ar-button-slot" />
