@@ -43,7 +43,8 @@ export default function SingleModelApp() {
               src={current.singleGlb}
               ios-src={current.singleUsdz}
               ar
-              ar-modes="webxr scene-viewer quick-look"
+              ar-scale="auto"
+              ar-modes="scene-viewer webxr quick-look"
               camera-controls
               tone-mapping="neutral"
               shadow-intensity="1"

@@ -6,7 +6,6 @@ import {
     DragControls,
     DragMode,
     findObjectOfType,
-    fitObjectIntoVolume,
     OrbitControls,
     onStart,
     WebXR,
@@ -24,7 +23,9 @@ type GardenContext = {
 } & Parameters<Parameters<typeof onStart>[0]>[0];
 
 const ADD_TREE_EVENT = "garden:add-tree";
-const TREE_DISPLAY_BOUNDS = new Box3();
+const TREE_MODEL_BOUNDS = new Box3();
+const TREE_MODEL_CENTER = new Vector3();
+const TREE_MODEL_BASE = new Vector3();
 
 let activeContext: GardenContext | null = null;
 let activeOrbitControls: OrbitControls | null = null;
@@ -47,9 +48,23 @@ const getTreeSpawnPosition = (index: number) => {
     };
 };
 
-const fitTreeModel = (root: Object3D) => {
-    TREE_DISPLAY_BOUNDS.setFromCenterAndSize(new Vector3(0, 0.95, 0), new Vector3(0.95, 1.9, 0.95));
-    fitObjectIntoVolume(root, TREE_DISPLAY_BOUNDS);
+const alignTreeModelToAnchor = (anchor: Object3D, root: Object3D) => {
+    anchor.updateWorldMatrix(true, false);
+    root.updateWorldMatrix(true, true);
+
+    TREE_MODEL_BOUNDS.setFromObject(root);
+    if (TREE_MODEL_BOUNDS.isEmpty()) return;
+
+    TREE_MODEL_BOUNDS.getCenter(TREE_MODEL_CENTER);
+    TREE_MODEL_BASE.set(TREE_MODEL_CENTER.x, TREE_MODEL_BOUNDS.min.y, TREE_MODEL_CENTER.z);
+
+    anchor.worldToLocal(TREE_MODEL_CENTER);
+    anchor.worldToLocal(TREE_MODEL_BASE);
+
+    root.position.x -= TREE_MODEL_CENTER.x;
+    root.position.z -= TREE_MODEL_CENTER.z;
+    root.position.y -= TREE_MODEL_BASE.y;
+    root.updateMatrixWorld(true);
 };
 
 const refreshCameraFit = () => {
@@ -81,7 +96,7 @@ const addTreeToScene = async (detail: TreeSpecies) => {
         return;
     }
 
-    fitTreeModel(instance);
+    alignTreeModelToAnchor(anchor, instance);
     AnimationUtils.autoplayAnimations(instance);
 
     const drag = addComponent(anchor, DragControls, {

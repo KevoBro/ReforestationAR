@@ -3,7 +3,7 @@ import placeholderPreview from "./assets/react.svg";
 import singleElmGLB from "./assets/ElmTreeAlternate.glb?url";
 import singleElmUSDZ from "./assets/tree_elm.usdz?url";
 import shrubGLB from "./assets/treeShrubRevised.glb?url";
-import shrubUSDZ from "./assets/treeShrub.usdz?url";
+import shrubUSDZ from "./assets/treeShrubRevised.usdz?url";
 
 export type TreeCatalogEntry = {
   id: string;
