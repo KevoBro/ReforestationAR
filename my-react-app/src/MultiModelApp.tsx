@@ -9,7 +9,7 @@ import catalogIcon from "./assets/catalogIcon.png";
 const getTreeSpecies = (tree: TreeCatalogEntry): TreeSpecies => ({
   id: tree.id,
   name: tree.name,
-  glb: tree.multiGlb,
+  glb: tree.singleGlb,
 });
 
 export default function MultiModelApp() {

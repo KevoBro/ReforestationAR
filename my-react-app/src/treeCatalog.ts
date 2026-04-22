@@ -1,6 +1,5 @@
 //import placeholderPreview from "./assets/react.svg";
-//import multiElmGLB from "./assets/ElmTree.glb?url";
-import singleElmGLB from "./assets/ElmTreeAlternate.glb?url";
+import singleElmGLB from "./assets/tree_elm.glb?url";
 import singleElmUSDZ from "./assets/tree_elm.usdz?url";
 import shrubGLB from "./assets/treeShrubRevised.glb?url";
 import shrubUSDZ from "./assets/treeShrubRevised.usdz?url";
@@ -11,7 +10,6 @@ export type TreeCatalogEntry = {
   id: string;
   name: string;
   previewImage: string;
-  multiGlb: string;
   singleGlb: string;
   singleUsdz: string;
   species: string;
@@ -26,7 +24,6 @@ export const TREE_CATALOG: TreeCatalogEntry[] = [
     id: "elm",
     name: "Elm Tree",
     previewImage: elmPreview,
-    multiGlb: singleElmGLB,
     singleGlb: singleElmGLB,
     singleUsdz: singleElmUSDZ,
     species: "American Elm",
@@ -39,7 +36,6 @@ export const TREE_CATALOG: TreeCatalogEntry[] = [
     id: "shrub",
     name: "Shrub",
     previewImage: shrubPreview,
-    multiGlb: shrubGLB,
     singleGlb: shrubGLB,
     singleUsdz: shrubUSDZ,
     species: "Mixed Shrub Placeholder",
