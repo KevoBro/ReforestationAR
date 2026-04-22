@@ -1,11 +1,15 @@
-//import placeholderPreview from "./assets/react.svg";
-//import multiElmGLB from "./assets/ElmTree.glb?url";
+import placeholderPreview from "./assets/react.svg";
 import singleElmGLB from "./assets/ElmTreeAlternate.glb?url";
 import singleElmUSDZ from "./assets/tree_elm.usdz?url";
 import shrubGLB from "./assets/treeShrubRevised.glb?url";
 import shrubUSDZ from "./assets/treeShrubRevised.usdz?url";
 import shrubPreview from "./assets/tree_previews/shrubTreePreview.png";
 import elmPreview from "./assets/tree_previews/elmTreePreview.png";
+
+const DEFAULT_TREE_API_URL =
+  "https://heliotrox.heliotrox.com/wp-json/wp/v2/tree?acf_format=standard&_fields=id,slug,acf,title";
+
+export const TREE_API_URL = import.meta.env.VITE_TREE_API_URL ?? DEFAULT_TREE_API_URL;
 
 export type TreeCatalogEntry = {
   id: string;
@@ -21,7 +25,27 @@ export type TreeCatalogEntry = {
   description: string;
 };
 
-export const TREE_CATALOG: TreeCatalogEntry[] = [
+export type WordPressTreeEntry = {
+  id?: number;
+  slug?: string;
+  title?: {
+    rendered?: string;
+  };
+  acf?: {
+    latin?: string;
+    model_glb?: string;
+    model_usdz?: string;
+    age_low?: string;
+    age_high?: string;
+    preview?: string;
+    height_low?: string;
+    height_high?: string;
+    soil_conditions?: string;
+    description?: string;
+  };
+};
+
+export const TREE_CATALOG_FALLBACK: TreeCatalogEntry[] = [
   {
     id: "elm",
     name: "Elm Tree",
@@ -49,3 +73,54 @@ export const TREE_CATALOG: TreeCatalogEntry[] = [
     description: "Placeholder entry for a shrub model used to test compact planting options in the catalog flow.",
   },
 ];
+
+export const TREE_CATALOG = TREE_CATALOG_FALLBACK;
+
+const stripHtmlTags = (value: string) => value.replace(/<[^>]*>/g, "").trim();
+
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const formatRangeLabel = (low: string | undefined, high: string | undefined, unit: string, prefix?: string) => {
+  const start = low?.trim();
+  const end = high?.trim();
+
+  if (start && end) {
+    return `${prefix ? `${prefix} ` : ""}${start}-${end} ${unit}`;
+  }
+  if (start) {
+    return `${prefix ? `${prefix} ` : ""}${start} ${unit}`;
+  }
+  if (end) {
+    return `${prefix ? `${prefix} ` : ""}${end} ${unit}`;
+  }
+  return prefix ? `${prefix} Unknown` : "Unknown";
+};
+
+export const mapWordPressTreeToCatalogEntry = (entry: WordPressTreeEntry): TreeCatalogEntry | null => {
+  const name = stripHtmlTags(entry.title?.rendered ?? "");
+  const acf = entry.acf;
+  const glb = acf?.model_glb?.trim();
+
+  if (!name || !glb) {
+    return null;
+  }
+
+  return {
+    id: entry.slug?.trim() || (entry.id ? String(entry.id) : slugify(name)),
+    name,
+    previewImage: acf?.preview?.trim() || placeholderPreview,
+    multiGlb: glb,
+    singleGlb: glb,
+    singleUsdz: acf?.model_usdz?.trim() || "",
+    species: acf?.latin?.trim() || "Unknown species",
+    modelAge: formatRangeLabel(acf?.age_low, acf?.age_high, "years", "Approx."),
+    heightRange: formatRangeLabel(acf?.height_low, acf?.height_high, "ft"),
+    soilConditions: acf?.soil_conditions?.trim() || "No soil conditions provided.",
+    description: acf?.description?.trim() || "No description provided.",
+  };
+};

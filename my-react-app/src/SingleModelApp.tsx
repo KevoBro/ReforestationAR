@@ -1,18 +1,41 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./page-shell.css";
 import TreeCatalogModal from "./components/TreeCatalogModal";
-import { TREE_CATALOG, type TreeCatalogEntry } from "./treeCatalog";
+import type { TreeCatalogEntry } from "./treeCatalog";
+import useTreeCatalog from "./useTreeCatalog";
 
 export default function SingleModelApp() {
   const [index, setIndex] = useState(0);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
-  const current = TREE_CATALOG[index];
+  const { trees, loading, error, usingFallback } = useTreeCatalog();
 
-  const nextModel = () => setIndex((value) => (value + 1) % TREE_CATALOG.length);
-  const previousModel = () => setIndex((value) => (value - 1 + TREE_CATALOG.length) % TREE_CATALOG.length);
+  useEffect(() => {
+    if (trees.length === 0) {
+      setIndex(0);
+      setIsCatalogOpen(false);
+      return;
+    }
+    if (index >= trees.length) {
+      setIndex(0);
+    }
+  }, [index, trees.length]);
+
+  const current = trees[index] ?? null;
+  const isReady = !loading && current !== null;
+  const hasMultipleTrees = trees.length > 1;
+
+  const nextModel = () => {
+    if (trees.length === 0) return;
+    setIndex((value) => (value + 1) % trees.length);
+  };
+
+  const previousModel = () => {
+    if (trees.length === 0) return;
+    setIndex((value) => (value - 1 + trees.length) % trees.length);
+  };
 
   const handleSelectTree = (tree: TreeCatalogEntry) => {
-    const nextIndex = TREE_CATALOG.findIndex((entry) => entry.id === tree.id);
+    const nextIndex = trees.findIndex((entry) => entry.id === tree.id);
     if (nextIndex >= 0) {
       setIndex(nextIndex);
     }
@@ -36,70 +59,94 @@ export default function SingleModelApp() {
             </p>
           </div>
 
+          {loading ? <div className="page-note">Loading tree catalog from WordPress...</div> : null}
+          {error ? (
+            <div className="page-note page-note--warning">
+              Live catalog unavailable. {error} {usingFallback ? "Using the local fallback catalog instead." : ""}
+            </div>
+          ) : null}
+
           <div className="viewer-card">
-            <model-viewer
-              key={current.id}
-              className="single-model-viewer"
-              src={current.singleGlb}
-              ios-src={current.singleUsdz}
-              ar
-              ar-scale="auto"
-              ar-modes="scene-viewer webxr quick-look"
-              camera-controls
-              tone-mapping="neutral"
-              shadow-intensity="1"
-              alt={`${current.name} 3D model`}
-            />
+            {current ? (
+              <model-viewer
+                key={current.id}
+                className="single-model-viewer"
+                src={current.singleGlb}
+                ios-src={current.singleUsdz}
+                ar
+                ar-scale="auto"
+                ar-modes="scene-viewer webxr quick-look"
+                camera-controls
+                tone-mapping="neutral"
+                shadow-intensity="1"
+                alt={`${current.name} 3D model`}
+              />
+            ) : (
+              <div className="viewer-loading">Loading tree preview...</div>
+            )}
           </div>
 
           <div className="model-picker">
-            <button className="picker-arrow" onClick={previousModel} aria-label="Previous tree species">
+            <button
+              className="picker-arrow"
+              onClick={previousModel}
+              aria-label="Previous tree species"
+              disabled={!isReady || !hasMultipleTrees}
+            >
               {"<"}
             </button>
             <button
               type="button"
               className="picker-label picker-label--catalog"
               aria-haspopup="dialog"
-              aria-label={`Open tree catalog for ${current.name}`}
+              aria-label={current ? `Open tree catalog for ${current.name}` : "Tree catalog is loading"}
               onClick={() => setIsCatalogOpen(true)}
+              disabled={!isReady}
             >
-              {current.name}
+              {current?.name ?? "Loading Trees..."}
             </button>
-            <button className="picker-arrow" onClick={nextModel} aria-label="Next tree species">
+            <button
+              className="picker-arrow"
+              onClick={nextModel}
+              aria-label="Next tree species"
+              disabled={!isReady || !hasMultipleTrees}
+            >
               {">"}
             </button>
           </div>
 
-          <div className="tree-summary-card">
-            <div className="feature-card-eyebrow">Tree Details</div>
-            <div className="feature-card-title">{current.name}</div>
-            <div className="feature-card-copy">{current.description}</div>
+          {current ? (
+            <div className="tree-summary-card">
+              <div className="feature-card-eyebrow">Tree Details</div>
+              <div className="feature-card-title">{current.name}</div>
+              <div className="feature-card-copy">{current.description}</div>
 
-            <div className="tree-summary-grid">
-              <div className="tree-summary-item">
-                <span className="tree-summary-label">Species</span>
-                <span className="tree-summary-value">{current.species}</span>
-              </div>
-              <div className="tree-summary-item">
-                <span className="tree-summary-label">Model Age</span>
-                <span className="tree-summary-value">{current.modelAge}</span>
-              </div>
-              <div className="tree-summary-item">
-                <span className="tree-summary-label">Height Range</span>
-                <span className="tree-summary-value">{current.heightRange}</span>
-              </div>
-              <div className="tree-summary-item">
-                <span className="tree-summary-label">Preferred Soil</span>
-                <span className="tree-summary-value">{current.soilConditions}</span>
+              <div className="tree-summary-grid">
+                <div className="tree-summary-item">
+                  <span className="tree-summary-label">Species</span>
+                  <span className="tree-summary-value">{current.species}</span>
+                </div>
+                <div className="tree-summary-item">
+                  <span className="tree-summary-label">Model Age</span>
+                  <span className="tree-summary-value">{current.modelAge}</span>
+                </div>
+                <div className="tree-summary-item">
+                  <span className="tree-summary-label">Height Range</span>
+                  <span className="tree-summary-value">{current.heightRange}</span>
+                </div>
+                <div className="tree-summary-item">
+                  <span className="tree-summary-label">Preferred Soil</span>
+                  <span className="tree-summary-value">{current.soilConditions}</span>
+                </div>
               </div>
             </div>
-          </div>
+          ) : null}
         </div>
       </div>
 
-      {isCatalogOpen ? (
+      {isCatalogOpen && current ? (
         <TreeCatalogModal
-          trees={TREE_CATALOG}
+          trees={trees}
           selectedId={current.id}
           title="Select A Tree"
           onClose={() => setIsCatalogOpen(false)}

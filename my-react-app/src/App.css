@@ -58,6 +58,17 @@
   line-height: 1.35;
 }
 
+.scene-status {
+  margin-top: 0.55rem;
+  color: #486248;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.scene-status--warning {
+  color: #7b4d22;
+}
+
 .model-controls {
   display: flex;
   align-items: center;
@@ -181,6 +192,18 @@
 .model-label--catalog:hover,
 .plant-button:hover {
   transform: translateY(-1px);
+}
+
+.arrow-button:disabled,
+.model-label--catalog:disabled,
+.plant-button:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.model-label--catalog:disabled img {
+  opacity: 0.8;
 }
 
 @media (max-width: 640px) {
