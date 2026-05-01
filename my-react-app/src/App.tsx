@@ -2,7 +2,7 @@ import { useState } from "react";
 import "./opening-page.css";
 import "./page-shell.css";
 
-type FeatureMode = "marker-based" | "single-model" | "multi-model";
+type FeatureMode = "single-model" | "multi-model";
 
 const FEATURES: Array<{
   id: FeatureMode;
@@ -12,15 +12,6 @@ const FEATURES: Array<{
   href: string;
   actionLabel: string;
 }> = [
-  {
-    id: "marker-based",
-    label: "Marker-Based",
-    title: "Marker-Based AR.js",
-    description:
-      "Launch the marker experience on its own page, choose a plant, and then open the camera view that uses the Hiro marker.",
-    href: "./marker-based.html",
-    actionLabel: "Open Marker-Based Page",
-  },
   {
     id: "single-model",
     label: "Single Model",

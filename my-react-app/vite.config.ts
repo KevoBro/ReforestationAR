@@ -9,7 +9,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: fileURLToPath(new URL("./index.html", import.meta.url)),
-        markerBased: fileURLToPath(new URL("./marker-based.html", import.meta.url)),
         singleModel: fileURLToPath(new URL("./single-model.html", import.meta.url)),
         multiModel: fileURLToPath(new URL("./multi-model.html", import.meta.url)),
       },
