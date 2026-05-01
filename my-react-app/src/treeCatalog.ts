@@ -1,6 +1,6 @@
 import placeholderPreview from "./assets/react.svg";
 import singleElmGLB from "./assets/ElmTreeAlternate.glb?url";
-import singleElmUSDZ from "./assets/tree_elm.usdz?url";
+import singleElmUSDZ from "./assets/ElmTreeAlternate.usdz?url"; 
 import shrubGLB from "./assets/treeShrubRevised.glb?url";
 import shrubUSDZ from "./assets/treeShrubRevised.usdz?url";
 import shrubPreview from "./assets/tree_previews/shrubTreePreview.png";
