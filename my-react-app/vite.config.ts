@@ -2,7 +2,8 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
+// Vite builds three standalone pages so the client can link to each AR mode
+// without needing an additional router.
 export default defineConfig({
   plugins: [react()],
   build: {

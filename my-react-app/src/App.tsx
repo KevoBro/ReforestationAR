@@ -4,6 +4,8 @@ import "./page-shell.css";
 
 type FeatureMode = "single-model" | "multi-model";
 
+// The mode selector page stays intentionally lightweight so each AR experience
+// can run on its own page without competing UI or session state.
 const FEATURES: Array<{
   id: FeatureMode;
   label: string;
@@ -37,6 +39,8 @@ export default function App() {
   const [mode, setMode] = useState<FeatureMode>("single-model");
   const current = FEATURES.find((feature) => feature.id === mode) ?? FEATURES[0];
 
+  // Each mode has its own HTML entry point so the client can link to them
+  // individually if needed.
   const openSelectedPage = () => {
     window.location.href = current.href;
   };

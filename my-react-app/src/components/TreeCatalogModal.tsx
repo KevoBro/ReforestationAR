@@ -22,7 +22,15 @@ export default function TreeCatalogModal({
 }: TreeCatalogModalProps) {
   return (
     <div className="catalog-backdrop" role="presentation" onClick={onClose}>
-      <div className="catalog-sheet" role="dialog" aria-modal="true" aria-label={title} onClick={(event) => event.stopPropagation()}>
+      <div
+        className="catalog-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        // The sheet stops click events so the backdrop only closes when the user
+        // clicks outside the catalog content.
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="catalog-header">
           <div>
             <div className="catalog-eyebrow">Catalog</div>

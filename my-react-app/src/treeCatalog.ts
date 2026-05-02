@@ -6,6 +6,7 @@ import shrubUSDZ from "./assets/treeShrubRevised.usdz?url";
 import shrubPreview from "./assets/tree_previews/shrubTreePreview.png";
 import elmPreview from "./assets/tree_previews/elmTreePreview.png";
 
+// This URL can be overridden with VITE_TREE_API_URL for different environments.
 const DEFAULT_TREE_API_URL =
   "https://heliotrox.heliotrox.com/wp-json/wp/v2/tree?acf_format=standard&_fields=id,slug,acf,title";
 
@@ -45,6 +46,8 @@ export type WordPressTreeEntry = {
   };
 };
 
+// Local fallback data keeps the app usable during API outages and also gives
+// the client a simple reference for the shape each entry needs to follow.
 export const TREE_CATALOG_FALLBACK: TreeCatalogEntry[] = [
   {
     id: "elm",
@@ -101,6 +104,8 @@ const formatRangeLabel = (low: string | undefined, high: string | undefined, uni
   return prefix ? `${prefix} Unknown` : "Unknown";
 };
 
+// Converts the WordPress custom post type response into the structure shared by
+// the single-model page, multi-model page, and tree catalog UI.
 export const mapWordPressTreeToCatalogEntry = (entry: WordPressTreeEntry): TreeCatalogEntry | null => {
   const name = stripHtmlTags(entry.title?.rendered ?? "");
   const acf = entry.acf;

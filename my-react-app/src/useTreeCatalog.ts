@@ -23,6 +23,8 @@ export default function useTreeCatalog(): UseTreeCatalogResult {
   const [usingFallback, setUsingFallback] = useState(false);
 
   useEffect(() => {
+    // AbortController prevents state updates if the user leaves the page while
+    // the WordPress request is still in flight.
     const controller = new AbortController();
 
     const loadTrees = async () => {
@@ -49,6 +51,8 @@ export default function useTreeCatalog(): UseTreeCatalogResult {
           return;
         }
 
+        // Falling back here keeps the UI functional even if the remote catalog
+        // is misconfigured, unavailable, or still being set up during handoff.
         const message = error instanceof Error ? error.message : FALLBACK_ERROR_MESSAGE;
         setTrees(TREE_CATALOG_FALLBACK);
         setError(message);

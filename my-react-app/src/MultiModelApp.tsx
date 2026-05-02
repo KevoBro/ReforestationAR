@@ -7,6 +7,7 @@ import type { TreeCatalogEntry } from "./treeCatalog";
 import useTreeCatalog from "./useTreeCatalog";
 import catalogIcon from "./assets/catalogIcon.png";
 
+// Needle only needs a small subset of fields when we dispatch an add-tree event.
 const getTreeSpecies = (tree: TreeCatalogEntry): TreeSpecies => ({
   id: tree.id,
   name: tree.name,
@@ -17,9 +18,12 @@ export default function MultiModelApp() {
   const [index, setIndex] = useState(0);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [detailsTreeId, setDetailsTreeId] = useState<string | null>(null);
+  // The AR page can still run if WordPress is unavailable by falling back to
+  // the local catalog entries defined in treeCatalog.ts.
   const { trees, loading, error, usingFallback } = useTreeCatalog();
 
   useEffect(() => {
+    // Reset modal state when a fresh catalog load temporarily removes entries.
     if (trees.length === 0) {
       setIndex(0);
       setIsCatalogOpen(false);
@@ -46,6 +50,8 @@ export default function MultiModelApp() {
     setIndex((value) => (value - 1 + trees.length) % trees.length);
   };
 
+  // Needle listens for this custom event inside needleScene.ts and places the
+  // requested model into the active AR scene.
   const addTree = () => {
     if (!current) return;
     window.dispatchEvent(new CustomEvent<TreeSpecies>("garden:add-tree", { detail: getTreeSpecies(current) }));
@@ -139,6 +145,7 @@ export default function MultiModelApp() {
             role="dialog"
             aria-modal="true"
             aria-label={`${detailsTree.name} details`}
+            // Stop clicks inside the sheet from closing the overlay underneath it.
             onClick={(event) => event.stopPropagation()}
           >
             <div className="tree-details-header">

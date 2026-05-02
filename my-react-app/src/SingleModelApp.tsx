@@ -7,9 +7,12 @@ import useTreeCatalog from "./useTreeCatalog";
 export default function SingleModelApp() {
   const [index, setIndex] = useState(0);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  // Tree data is loaded from WordPress first, then falls back to the local
+  // catalog so the page still works during API issues or handoff testing.
   const { trees, loading, error, usingFallback } = useTreeCatalog();
 
   useEffect(() => {
+    // Keep the selected index valid if the catalog changes size after load.
     if (trees.length === 0) {
       setIndex(0);
       setIsCatalogOpen(false);
@@ -79,6 +82,8 @@ export default function SingleModelApp() {
                 camera-controls
                 tone-mapping="neutral"
                 shadow-intensity="1"
+                // model-viewer handles the 3D preview, camera controls, and the
+                // native AR handoff on supported Android and iOS devices.
                 alt={`${current.name} 3D model`}
               />
             ) : (
