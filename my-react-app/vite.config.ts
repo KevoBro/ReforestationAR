@@ -9,7 +9,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: fileURLToPath(new URL("./index.html", import.meta.url)),
-        markerBased: fileURLToPath(new URL("./marker-based.html", import.meta.url)),
         singleModel: fileURLToPath(new URL("./single-model.html", import.meta.url)),
         multiModel: fileURLToPath(new URL("./multi-model.html", import.meta.url)),
       },
@@ -21,6 +20,6 @@ export default defineConfig({
     },
   },
   server: {
-    allowedHosts: ["resting-appellatively-caylee.ngrok-free.dev", "pnxze-198-137-18-197.run.pinggy-free.link"],
+    allowedHosts: ["resting-appellatively-caylee.ngrok-free.dev", "aozwb-153-33-215-110.run.pinggy-free.link"],
   },
 })

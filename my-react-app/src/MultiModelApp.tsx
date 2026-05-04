@@ -13,11 +13,22 @@ const getTreeSpecies = (tree: TreeCatalogEntry): TreeSpecies => ({
   glb: tree.multiGlb,
 });
 
+const TOUR_STEPS = [
+  {
+    target: "ar-slot",
+    title: "Enter AR with Needle Go",
+    description:
+      "Tap the Enter AR button at the bottom to launch the experience. Once loaded, point your camera at your planting area and press the add button.",
+  },
+] as const;
+
 export default function MultiModelApp() {
   const [index, setIndex] = useState(0);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [detailsTreeId, setDetailsTreeId] = useState<string | null>(null);
+  const [isTourActive, setIsTourActive] = useState(() => new URLSearchParams(window.location.search).get("tour") === "1");
   const { trees, loading, error, usingFallback } = useTreeCatalog();
+  const currentTour = TOUR_STEPS[0];
 
   useEffect(() => {
     if (trees.length === 0) {
@@ -65,11 +76,21 @@ export default function MultiModelApp() {
     setDetailsTreeId(null);
   };
 
+  const closeTour = () => {
+    setIsTourActive(false);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("tour");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  };
+
   return (
     <>
       <div className="app-root">
-        <div className="ui-overlay">
-          <div className="scene-card">
+        <div className={`ui-overlay${isTourActive ? " ui-overlay--tour" : ""}`}>
+          <button className="page-back-button" type="button" onClick={() => (window.location.href = "./index.html")}>
+            Back
+          </button>
+          <div className={`scene-card${isTourActive ? " is-tour-muted" : ""}`}>
             <div className="scene-eyebrow">Tree Garden</div>
             <div className="scene-title">
               {loading ? "Loading tree catalog..." : "Add a tree, then drag it to reposition it."}
@@ -82,7 +103,7 @@ export default function MultiModelApp() {
             ) : null}
           </div>
 
-          <div className="model-controls">
+          <div className={`model-controls${isTourActive ? " is-tour-muted" : ""}`}>
             <button
               className="arrow-button"
               onClick={previousSpecies}
@@ -112,12 +133,51 @@ export default function MultiModelApp() {
             </button>
           </div>
 
-          <button className="plant-button" onClick={addTree} disabled={!isReady}>
+          <button
+            className={`plant-button${isTourActive ? " is-tour-muted" : ""}`}
+            onClick={addTree}
+            disabled={!isReady}
+          >
             {current ? `Add ${current.name}` : "Loading Catalog..."}
           </button>
 
-          <div id="needle-ar-button-slot" className="needle-ar-button-slot" />
+          <div
+            id="needle-ar-button-slot"
+            className={`needle-ar-button-slot${isTourActive ? " needle-ar-button-slot--tour-highlight" : ""}`}
+          />
         </div>
+
+        {isTourActive ? (
+          <>
+            <div className="tour-backdrop" aria-hidden="true" />
+            <div
+              className="tour-overlay tour-overlay--top"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Multi-model mode tour guide"
+            >
+              <div className="tour-overlay-screen-arrow" aria-hidden="true">
+                ↓ Enter AR below
+              </div>
+              <div className="tour-overlay-panel">
+                <div className="tour-overlay-step">
+                  AR Step
+                </div>
+                <h2 className="tour-overlay-title">{currentTour.title}</h2>
+                <p className="tour-overlay-copy">{currentTour.description}</p>
+
+                <div className="tour-overlay-actions">
+                  <button className="tour-overlay-button tour-overlay-button--primary" type="button" onClick={closeTour}>
+                    Got It
+                  </button>
+                  <button className="tour-overlay-link" type="button" onClick={closeTour}>
+                    Skip Tour
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : null}
       </div>
 
       {isCatalogOpen && current ? (
