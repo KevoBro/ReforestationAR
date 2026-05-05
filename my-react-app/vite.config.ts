@@ -21,6 +21,6 @@ export default defineConfig({
     },
   },
   server: {
-    allowedHosts: ["resting-appellatively-caylee.ngrok-free.dev", "pnxze-198-137-18-197.run.pinggy-free.link"],
+    allowedHosts: ["resting-appellatively-caylee.ngrok-free.dev", "aozwb-153-33-215-110.run.pinggy-free.link"],
   },
 })

@@ -36,6 +36,7 @@ let nextTreeIndex = 0;
 let arButtonAttachRetries = 0;
 
 const AR_BUTTON_SLOT_ID = "needle-ar-button-slot";
+const isTourMode = new URLSearchParams(window.location.search).get("tour") === "1";
 
 // Desktop preview mode still uses a simple grid so the scene remains usable
 // even when WebXR is not active.
@@ -135,6 +136,9 @@ const attachAddTreeListener = () => {
 const attachNeedleARButtonToOverlay = (button: HTMLButtonElement) => {
     const slot = document.getElementById(AR_BUTTON_SLOT_ID);
     if (slot) {
+        if (isTourMode) {
+            button.classList.add("needle-ar-button--tour-highlight");
+        }
         slot.replaceChildren(button);
         arButtonAttachRetries = 0;
         return;

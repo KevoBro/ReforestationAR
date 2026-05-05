@@ -4,12 +4,36 @@ import TreeCatalogModal from "./components/TreeCatalogModal";
 import type { TreeCatalogEntry } from "./treeCatalog";
 import useTreeCatalog from "./useTreeCatalog";
 
+const TOUR_STEPS = [
+  {
+    target: "picker",
+    title: "Choose a tree",
+    description: "Use the arrow buttons or tap the tree name to open the catalog and select a different tree.",
+  },
+  {
+    target: "viewer",
+    title: "Preview the selected tree",
+    description: "Use the viewer to rotate and inspect your selected tree before launching AR.",
+  },
+  {
+    target: "viewer",
+    title: "Open AR from the viewer",
+    description:
+      "When ready, tap the AR button at the bottom right of the viewer to enter the AR view.",
+  },
+] as const;
+
 export default function SingleModelApp() {
   const [index, setIndex] = useState(0);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  const [tourStep, setTourStep] = useState(0);
+  const [isTourActive, setIsTourActive] = useState(() => new URLSearchParams(window.location.search).get("tour") === "1");
+  
   // Tree data is loaded from WordPress first, then falls back to the local
   // catalog so the page still works during API issues or handoff testing.
   const { trees, loading, error, usingFallback } = useTreeCatalog();
+  const currentTour = TOUR_STEPS[tourStep];
+  const isFinalTourStep = tourStep === TOUR_STEPS.length - 1;
 
   useEffect(() => {
     // Keep the selected index valid if the catalog changes size after load.
@@ -45,13 +69,20 @@ export default function SingleModelApp() {
     setIsCatalogOpen(false);
   };
 
+  const closeTour = () => {
+    setIsTourActive(false);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("tour");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  };
+
   return (
     <>
       <div className="page-shell">
         <div className="page-panel page-panel--wide">
-          <a className="back-link" href="./index.html">
-            Back To Mode Selector
-          </a>
+          <button className="page-back-button" type="button" onClick={() => (window.location.href = "./index.html")}>
+            Back
+          </button>
 
           <div className="page-intro">
             <div className="page-eyebrow">Single Model AR</div>
@@ -69,7 +100,7 @@ export default function SingleModelApp() {
             </div>
           ) : null}
 
-          <div className="viewer-card">
+          <div className={`viewer-card${isTourActive && currentTour.target === "viewer" ? " is-tour-highlight" : ""}`}>
             {current ? (
               <model-viewer
                 key={current.id}
@@ -91,7 +122,7 @@ export default function SingleModelApp() {
             )}
           </div>
 
-          <div className="model-picker">
+          <div className={`model-picker${isTourActive && currentTour.target === "picker" ? " is-tour-highlight" : ""}`}>
             <button
               className="picker-arrow"
               onClick={previousModel}
@@ -145,6 +176,53 @@ export default function SingleModelApp() {
                 </div>
               </div>
             </div>
+          ) : null}
+
+          {isTourActive ? (
+            <>
+              <div className="tour-backdrop" aria-hidden="true" />
+              <div
+                className={`tour-overlay${tourStep >= 1 ? " tour-overlay--top" : ""}`}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Single model mode tour guide"
+              >
+                <div className="tour-overlay-panel">
+                  <div className="tour-overlay-step">
+                    Step {tourStep + 1} of {TOUR_STEPS.length}
+                  </div>
+                  <h2 className="tour-overlay-title">{currentTour.title}</h2>
+                  <p className="tour-overlay-copy">{currentTour.description}</p>
+
+                  <div className="tour-overlay-actions">
+                    <button
+                      className="tour-overlay-button"
+                      type="button"
+                      onClick={() => setTourStep((step) => Math.max(step - 1, 0))}
+                      disabled={tourStep === 0}
+                    >
+                      Previous
+                    </button>
+                    <button
+                      className="tour-overlay-button tour-overlay-button--primary"
+                      type="button"
+                      onClick={() => {
+                        if (!isFinalTourStep) {
+                          setTourStep((step) => Math.min(step + 1, TOUR_STEPS.length - 1));
+                          return;
+                        }
+                        closeTour();
+                      }}
+                    >
+                      {isFinalTourStep ? "Finish Tour" : "Next"}
+                    </button>
+                    <button className="tour-overlay-link" type="button" onClick={closeTour}>
+                      Skip Tour
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
           ) : null}
         </div>
       </div>
