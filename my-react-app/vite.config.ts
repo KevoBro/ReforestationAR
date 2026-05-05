@@ -2,14 +2,14 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
+// Vite builds three standalone pages so the client can link to each AR mode
+// without needing an additional router.
 export default defineConfig({
   plugins: [react()],
   build: {
     rollupOptions: {
       input: {
         main: fileURLToPath(new URL("./index.html", import.meta.url)),
-        markerBased: fileURLToPath(new URL("./marker-based.html", import.meta.url)),
         singleModel: fileURLToPath(new URL("./single-model.html", import.meta.url)),
         multiModel: fileURLToPath(new URL("./multi-model.html", import.meta.url)),
       },

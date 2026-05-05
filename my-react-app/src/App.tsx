@@ -2,8 +2,10 @@ import { useState } from "react";
 import "./opening-page.css";
 import "./page-shell.css";
 
-type FeatureMode = "marker-based" | "single-model" | "multi-model";
+type FeatureMode = "single-model" | "multi-model";
 
+// The mode selector page stays intentionally lightweight so each AR experience
+// can run on its own page without competing UI or session state.
 const FEATURES: Array<{
   id: FeatureMode;
   label: string;
@@ -12,15 +14,6 @@ const FEATURES: Array<{
   href: string;
   actionLabel: string;
 }> = [
-  {
-    id: "marker-based",
-    label: "Marker-Based",
-    title: "Marker-Based AR.js",
-    description:
-      "Launch the marker experience on its own page, choose a plant, and then open the camera view that uses the Hiro marker.",
-    href: "./marker-based.html",
-    actionLabel: "Open Marker-Based Page",
-  },
   {
     id: "single-model",
     label: "Single Model",
@@ -46,6 +39,8 @@ export default function App() {
   const [mode, setMode] = useState<FeatureMode>("single-model");
   const current = FEATURES.find((feature) => feature.id === mode) ?? FEATURES[0];
 
+  // Each mode has its own HTML entry point so the client can link to them
+  // individually if needed.
   const openSelectedPage = () => {
     window.location.href = current.href;
   };

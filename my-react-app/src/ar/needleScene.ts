@@ -37,6 +37,8 @@ let arButtonAttachRetries = 0;
 
 const AR_BUTTON_SLOT_ID = "needle-ar-button-slot";
 
+// Desktop preview mode still uses a simple grid so the scene remains usable
+// even when WebXR is not active.
 const getTreeSpawnPosition = (index: number) => {
     const spacing = 1.35;
     const column = (index % 3) - 1;
@@ -48,6 +50,8 @@ const getTreeSpawnPosition = (index: number) => {
     };
 };
 
+// Keep each imported tree at its authored scale and only move it so the model
+// is centered on the anchor and its base sits on the ground plane.
 const alignTreeModelToAnchor = (anchor: Object3D, root: Object3D) => {
     anchor.updateWorldMatrix(true, false);
     root.updateWorldMatrix(true, true);
@@ -82,6 +86,8 @@ const refreshCameraFit = () => {
 const addTreeToScene = async (detail: TreeSpecies) => {
     if (!activeContext) return;
 
+    // In non-AR preview mode, each new tree gets a predictable slot so the user
+    // can inspect several models without them overlapping by default.
     const spawn = getTreeSpawnPosition(nextTreeIndex++);
     const anchor = new Object3D();
     anchor.name = `TreeAnchor_${detail.id}_${nextTreeIndex}`;
@@ -99,6 +105,8 @@ const addTreeToScene = async (detail: TreeSpecies) => {
     alignTreeModelToAnchor(anchor, instance);
     AnimationUtils.autoplayAnimations(instance);
 
+    // DragControls lets planted trees be repositioned after placement without
+    // exposing Needle's default transform gizmo.
     const drag = addComponent(anchor, DragControls, {
         dragMode: DragMode.XZPlane,
         xrDragMode: DragMode.Attached,
@@ -141,6 +149,7 @@ onStart((context) => {
     const gardenContext = context as GardenContext;
     if (gardenContext.__gardenInitialized) return;
 
+    // Guard against duplicate initialization during hot reloads or React remounts.
     gardenContext.__gardenInitialized = true;
     activeContext = gardenContext;
 
@@ -171,6 +180,7 @@ onStart((context) => {
     activeShadows.darkness = 0.72;
     activeShadows.opacity = 0.88;
 
+    // Needle creates the AR session and initial scene placement flow here.
     const webxr = addComponent(context.scene, WebXR, {
         createARButton: true,
         createVRButton: false,

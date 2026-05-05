@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import "./tree-catalog.css";
 import type { TreeSpecies } from "./ar/needleScene";
 import TreeCatalogModal from "./components/TreeCatalogModal";
-import { TREE_CATALOG, type TreeCatalogEntry } from "./treeCatalog";
+import type { TreeCatalogEntry } from "./treeCatalog";
+import useTreeCatalog from "./useTreeCatalog";
 import catalogIcon from "./assets/catalogIcon.png";
 
+// Needle only needs a small subset of fields when we dispatch an add-tree event.
 const getTreeSpecies = (tree: TreeCatalogEntry): TreeSpecies => ({
   id: tree.id,
   name: tree.name,
@@ -16,19 +18,47 @@ export default function MultiModelApp() {
   const [index, setIndex] = useState(0);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [detailsTreeId, setDetailsTreeId] = useState<string | null>(null);
+  // The AR page can still run if WordPress is unavailable by falling back to
+  // the local catalog entries defined in treeCatalog.ts.
+  const { trees, loading, error, usingFallback } = useTreeCatalog();
 
-  const current = TREE_CATALOG[index];
-  const detailsTree = TREE_CATALOG.find((tree) => tree.id === detailsTreeId) ?? null;
+  useEffect(() => {
+    // Reset modal state when a fresh catalog load temporarily removes entries.
+    if (trees.length === 0) {
+      setIndex(0);
+      setIsCatalogOpen(false);
+      setDetailsTreeId(null);
+      return;
+    }
+    if (index >= trees.length) {
+      setIndex(0);
+    }
+  }, [index, trees.length]);
 
-  const nextSpecies = () => setIndex((value) => (value + 1) % TREE_CATALOG.length);
-  const previousSpecies = () => setIndex((value) => (value - 1 + TREE_CATALOG.length) % TREE_CATALOG.length);
+  const current = trees[index] ?? null;
+  const detailsTree = trees.find((tree) => tree.id === detailsTreeId) ?? null;
+  const isReady = !loading && current !== null;
+  const hasMultipleTrees = trees.length > 1;
 
+  const nextSpecies = () => {
+    if (trees.length === 0) return;
+    setIndex((value) => (value + 1) % trees.length);
+  };
+
+  const previousSpecies = () => {
+    if (trees.length === 0) return;
+    setIndex((value) => (value - 1 + trees.length) % trees.length);
+  };
+
+  // Needle listens for this custom event inside needleScene.ts and places the
+  // requested model into the active AR scene.
   const addTree = () => {
+    if (!current) return;
     window.dispatchEvent(new CustomEvent<TreeSpecies>("garden:add-tree", { detail: getTreeSpecies(current) }));
   };
 
   const handleSelectTree = (tree: TreeCatalogEntry) => {
-    const nextIndex = TREE_CATALOG.findIndex((entry) => entry.id === tree.id);
+    const nextIndex = trees.findIndex((entry) => entry.id === tree.id);
     if (nextIndex >= 0) {
       setIndex(nextIndex);
     }
@@ -47,39 +77,58 @@ export default function MultiModelApp() {
         <div className="ui-overlay">
           <div className="scene-card">
             <div className="scene-eyebrow">Tree Garden</div>
-            <div className="scene-title">Add a tree, then drag it to reposition it.</div>
+            <div className="scene-title">
+              {loading ? "Loading tree catalog..." : "Add a tree, then drag it to reposition it."}
+            </div>
+            {loading ? <div className="scene-status">Fetching live tree data from WordPress.</div> : null}
+            {error ? (
+              <div className="scene-status scene-status--warning">
+                Live catalog unavailable. {error} {usingFallback ? "Using the local fallback catalog instead." : ""}
+              </div>
+            ) : null}
           </div>
 
           <div className="model-controls">
-            <button className="arrow-button" onClick={previousSpecies} aria-label="Previous tree species">
+            <button
+              className="arrow-button"
+              onClick={previousSpecies}
+              aria-label="Previous tree species"
+              disabled={!isReady || !hasMultipleTrees}
+            >
               {"<"}
             </button>
             <button
               type="button"
               className="model-label model-label--catalog"
               aria-haspopup="dialog"
-              aria-label={`Open tree catalog for ${current.name}`}
+              aria-label={current ? `Open tree catalog for ${current.name}` : "Tree catalog is loading"}
               onClick={() => setIsCatalogOpen(true)}
+              disabled={!isReady}
             >
-              <span className="model-label-text">{current.name}</span>
+              <span className="model-label-text">{current?.name ?? "Loading Trees..."}</span>
               <img className="catalogIcon" src={catalogIcon} alt="catalog icon" />
             </button>
-            <button className="arrow-button" onClick={nextSpecies} aria-label="Next tree species">
+            <button
+              className="arrow-button"
+              onClick={nextSpecies}
+              aria-label="Next tree species"
+              disabled={!isReady || !hasMultipleTrees}
+            >
               {">"}
             </button>
           </div>
 
-          <button className="plant-button" onClick={addTree}>
-            Add {current.name} 
+          <button className="plant-button" onClick={addTree} disabled={!isReady}>
+            {current ? `Add ${current.name}` : "Loading Catalog..."}
           </button>
 
           <div id="needle-ar-button-slot" className="needle-ar-button-slot" />
         </div>
       </div>
 
-      {isCatalogOpen ? (
+      {isCatalogOpen && current ? (
         <TreeCatalogModal
-          trees={TREE_CATALOG}
+          trees={trees}
           selectedId={current.id}
           title="Select A Tree"
           showInfoButton
@@ -96,6 +145,7 @@ export default function MultiModelApp() {
             role="dialog"
             aria-modal="true"
             aria-label={`${detailsTree.name} details`}
+            // Stop clicks inside the sheet from closing the overlay underneath it.
             onClick={(event) => event.stopPropagation()}
           >
             <div className="tree-details-header">
