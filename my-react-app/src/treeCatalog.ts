@@ -116,7 +116,6 @@ export const mapWordPressTreeToCatalogEntry = (entry: WordPressTreeEntry): TreeC
     id: entry.slug?.trim() || (entry.id ? String(entry.id) : slugify(name)),
     name,
     previewImage: acf?.preview?.trim() || placeholderPreview,
-    multiGlb: glb,
     singleGlb: glb,
     singleUsdz: acf?.model_usdz?.trim() || "",
     species: acf?.latin?.trim() || "Unknown species",
